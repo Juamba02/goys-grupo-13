@@ -16,7 +16,7 @@
 
 **Por qué esta repartición:** R1+R2 ya trabajan codo a codo (son las dos puntas de las mismas sesiones eBGP) y R3+R4 corren el mismo proceso OSPF de punta a punta, así que agruparlos no mezcla cosas que no se relacionen. R5 queda solo porque es el 20% de "gestión operativa" de la rúbrica y conviene que una sola persona sea dueña consistente del backlog/change log/backups en vez de repartirlo.
 
-**Rotación F4:** la consigna pide rotación obligatoria R1↔R2; como Persona A ya cubre ambos, ese requisito queda cumplido de entrada. Para que no se pierda el espíritu de la regla (que nadie termine viendo solo "su" mitad de la red), en F4 Persona A y Persona B intercambian por un rato: B revisa/ajusta algo del lado Edge-ISP y A revisa OSPF/VRRP. Esto además ayuda para F5, donde cada integrante tiene que explicar su parte **y** una parte ajena.
+**Rotación F4:** la consigna pide rotación obligatoria R1↔R2; como Joaquin ya cubre ambos, ese requisito queda cumplido de entrada. Para que no se pierda el espíritu de la regla (que nadie termine viendo solo "su" mitad de la red), en F4 Joaquin y Juan intercambian por un rato: Juan revisa/ajusta algo del lado Edge-ISP y Joaquin revisa OSPF/VRRP. Esto además ayuda para F5, donde cada integrante tiene que explicar su parte **y** una parte ajena.
 
 ## Resumen del laboratorio
 
