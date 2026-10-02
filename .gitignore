@@ -1,0 +1,14 @@
+# Archivos de GNS3 (pesados / binarios, no versionar el proyecto completo salvo acuerdo del grupo)
+*.gns3project
+*.gns3
+project-files/
+
+# Claves y secretos reales (nunca commitear contraseñas/keys reales)
+*.secret
+secrets/
+*.key
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+*.swp
