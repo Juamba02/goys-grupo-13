@@ -25,3 +25,35 @@ add address=203.0.113.1/32 interface=loopback comment="loopback"
 
 # Verificacion:
 #   /ping 192.0.2.2 count=3
+
+# ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
+# Las claves NO van en este archivo. Despues de importar, desde la consola:
+#   /password                                   (clave de admin, del gestor del grupo)
+#   /user set monitor password=<clave> disabled=no
+
+/user
+add name=monitor group=read disabled=yes comment="solo lectura / consultas y SNMP"
+
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set www-ssl disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+set ssh address=203.0.113.0/24
+set winbox address=203.0.113.0/24
+
+/ip ssh set strong-crypto=yes
+
+/ip socks set enabled=no
+/ip upnp set enabled=no
+/ip proxy set enabled=no
+/ip cloud set ddns-enabled=no update-time=no
+/ip dns set allow-remote-requests=no
+/tool bandwidth-server set enabled=no
+
+# el unico enlace es hacia el cliente: sin descubrimiento ni acceso por MAC
+/ip neighbor discovery-settings set discover-interface-list=none
+/tool mac-server set allowed-interface-list=none
+/tool mac-server mac-winbox set allowed-interface-list=none
