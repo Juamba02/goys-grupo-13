@@ -7,6 +7,9 @@
 
 /system identity set name=EDGE
 
+# CHR trae un dhcp-client en ether1 por defecto: no va en este diseno
+/ip dhcp-client remove [ find ]
+
 /interface ethernet
 set [ find default-name=ether1 ] comment="to ISP-1"
 set [ find default-name=ether2 ] comment="to ISP-2"
