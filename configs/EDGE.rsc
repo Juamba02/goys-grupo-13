@@ -49,21 +49,22 @@ add address=10.255.255.3/32 interface=loopback comment="loopback"
 add name=monitor group=read disabled=yes comment="solo lectura / consultas y SNMP"
 
 /ip service
-set telnet disabled=yes
-set ftp disabled=yes
-set www disabled=yes
-set www-ssl disabled=yes
-set api disabled=yes
-set api-ssl disabled=yes
-set ssh address=10.0.0.0/8
-set winbox address=10.0.0.0/8
+set [ find name=telnet ] disabled=yes
+set [ find name=ftp ] disabled=yes
+set [ find name=www ] disabled=yes
+set [ find name=www-ssl ] disabled=yes
+set [ find name=api ] disabled=yes
+set [ find name=api-ssl ] disabled=yes
+set [ find name=reverse-proxy ] disabled=yes
+set [ find name=ssh ] address=10.0.0.0/8
+set [ find name=winbox ] address=10.0.0.0/8
 
 /ip ssh set strong-crypto=yes
 
 /ip socks set enabled=no
 /ip upnp set enabled=no
 /ip proxy set enabled=no
-/ip cloud set ddns-enabled=no update-time=no
+/ip cloud set update-time=no
 /ip dns set allow-remote-requests=no
 /tool bandwidth-server set enabled=no
 
