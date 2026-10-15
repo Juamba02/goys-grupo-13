@@ -235,7 +235,16 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 | Fecha | Responsable | Cambio | Motivo | Cómo se revierte |
 | :---- | :---- | :---- | :---- | :---- |
-| <!-- --> | <!-- --> | <!-- --> | <!-- --> | <!-- --> |
+| 15/10/2026 | Joaquin Mazza (R1) | IPs de enlace y loopback en EDGE (`cf78733`) | F1: direccionamiento según IPAM 1.2 | Revertir el commit y borrar las direcciones en el router |
+| 15/10/2026 | Joaquin Mazza (R2) | IPs de enlace y loopback en ISP-1 e ISP-2 (`6f14db3`) | F1: direccionamiento según IPAM 1.2 | Revertir el commit y borrar las direcciones en el router |
+| 15/10/2026 | Joaquin Mazza (R2) | Hardening de ISP-1 e ISP-2 (`3936eb5`) | F1: política de seguridad 1.3 | Revertir el commit y reactivar los servicios |
+| 15/10/2026 | Joaquin Mazza (R1) | Hardening de EDGE (`80d9d7d`) | F1: política de seguridad 1.3 | Revertir el commit y reactivar los servicios |
+| 15/10/2026 | Joaquin Mazza (R1) | Servicios de EDGE con `find` por nombre (`ef7bbdf`) | En RouterOS 7.24 `set telnet ...` no encontraba el servicio y quedaban activos | Revertir el commit |
+| 15/10/2026 | Joaquin Mazza (R1) | Se borra el dhcp-client por defecto de EDGE (`4c44a91`) | CHR lo trae en ether1 y no forma parte del diseño | `/ip dhcp-client add interface=ether1` |
+| 15/10/2026 | Joaquin Mazza (R2) | Servicios de ISP-1 e ISP-2 con `find` por nombre (`ad545c5`) | Mismo problema de RouterOS 7.24 | Revertir el commit |
+| 15/10/2026 | Joaquin Mazza (R2) | Se borra el dhcp-client por defecto de ISP-1 e ISP-2 (`57be045`) | CHR lo trae en ether1 y no forma parte del diseño | `/ip dhcp-client add interface=ether1` |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Renombrado ether5-8 → ether1-4 y reasignación de IPs (sin commit, solo en el router) | Al migrar los nodos a VMs fijas de VirtualBox cambiaron las MAC y RouterOS creó interfaces nuevas | Restaurar el backup base |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Capturas de verificación de F1 (`b610656`) | Evidencia para las secciones 2, 4 y 5 | Revertir el commit |
 
 ### 6.2 Backups
 

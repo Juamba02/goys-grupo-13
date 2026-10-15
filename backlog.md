@@ -51,11 +51,11 @@
 
 ### Despliegue (7 CHR + 2 switches + 2 hosts)
 
-- [ ] [R1] [R3] [R4] Levantar y cablear los 7 CHR + 2 switches + 2 hosts según el diagrama, cada uno sus equipos
+- [~] [R1] [R3] [R4] Levantar y cablear los 7 CHR + 2 switches + 2 hosts según el diagrama, cada uno sus equipos — proyecto GNS3 con los 11 nodos y 15 enlaces armado; EDGE, ISP-1 e ISP-2 levantados (R1/R2); falta levantar CORE/DIST (R3/R4)
 
 ### IPs de enlace + loopbacks
 
-- [ ] [R1] [R3] [R4] Configurar IPs de enlace + loopbacks según IPAM; verificar ping entre vecinos directos
+- [~] [R1] [R3] [R4] Configurar IPs de enlace + loopbacks según IPAM; verificar ping entre vecinos directos — EDGE, ISP-1 e ISP-2 hechos, ping EDGE↔ISP-1 y EDGE↔ISP-2 OK (R1/R2); falta CORE/DIST (R3/R4)
 
 ### Snapshot BASE
 
@@ -63,7 +63,7 @@
 
 ### Hardening (los 7 routers)
 
-- [ ] [R1] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en los routers de cada uno
+- [~] [R1] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en los routers de cada uno — EDGE, ISP-1 e ISP-2 hechos y verificados (R1/R2); falta CORE/DIST (R3/R4)
 - [ ] [R5] Verificar que el hardening esté aplicado en los 7 routers
 
 ### Backup inicial (`/export`)
