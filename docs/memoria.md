@@ -94,12 +94,19 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ## 2. Topología
 
-> Pegar acá la captura del proyecto GNS3 (o el diagrama) con las 5 capas identificadas — **pendiente de F1** (requiere los nodos desplegados). El diagrama de diseño corregido ya está en `docs/diagramas/topologia.md`.
+Proyecto GNS3 `goys-failover-g13` (F1): 11 nodos y 15 enlaces, los 7 routers como VMs de VirtualBox con MikroTik CHR 7.24.5. El diagrama de diseño corregido está en `docs/diagramas/topologia.md`.
 
-```
-[INTERNET] [EDGE] [CORE] [DISTRIBUTION] [ACCESS]
-<!-- insertar diagrama/captura en F1 -->
-```
+![Topología del proyecto GNS3](../capturas/f1/topologia-gns3.png)
+
+| Capa | Nodos | Enlaces |
+| :---- | :---- | :---- |
+| INTERNET | ISP-1 (AS 65001), ISP-2 (AS 65002) | ether1 de cada ISP → EDGE |
+| EDGE | EDGE (AS 65000) | ether1 → ISP-1, ether2 → ISP-2, ether3 → CORE-1, ether4 → CORE-2 |
+| CORE | CORE-1, CORE-2 | ether1 → EDGE, ether2 → core-core, ether3 → DIST-1, ether4 → DIST-2 |
+| DISTRIBUTION | DIST-1, DIST-2 | ether1 → CORE-1, ether2 → CORE-2, ether3 → SW-USERS, ether4 → SW-SERVERS |
+| ACCESS | SW-USERS + PC-USER, SW-SERVERS + SRV | switch → host (VPCS) |
+
+En la captura, las etiquetas de GNS3 `0/0`, `1/0`, `2/0`, `3/0` corresponden a `ether1`, `ether2`, `ether3`, `ether4` de cada router.
 
 ---
 
@@ -109,21 +116,27 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ### 3.1 ISP-1
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/ISP-1.rsc`](../configs/ISP-1.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 192.0.2.1/30 → EDGE; `loopback` 203.0.113.1/32 (router-id).
+- **Interfaces:** lista `CUSTOMER` con `ether1` (enlace al cliente). `ether2`–`ether4` apagadas (sin uso).
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde la loopback propia `203.0.113.1/32` (gestión solo por consola de GNS3); socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; sin descubrimiento de vecinos ni MAC server; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.2 ISP-2
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/ISP-2.rsc`](../configs/ISP-2.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 192.0.2.5/30 → EDGE; `loopback` 203.0.113.2/32 (router-id).
+- **Interfaces:** lista `CUSTOMER` con `ether1` (enlace al cliente). `ether2`–`ether4` apagadas (sin uso).
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde la loopback propia `203.0.113.2/32` (gestión solo por consola de GNS3); socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; sin descubrimiento de vecinos ni MAC server; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.3 EDGE
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 192.0.2.2/30 → ISP-1; `ether2` 192.0.2.6/30 → ISP-2; `ether3` 10.0.0.1/30 → CORE-1; `ether4` 10.0.0.5/30 → CORE-2; `loopback` 10.255.255.3/32 (router-id).
+- **Interfaces:** lista `WAN` (`ether1`, `ether2`, enlaces a los proveedores) y lista `LAN` (`ether3`, `ether4` y loopback), para el firewall de F3.
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.4 CORE-1
 
@@ -185,8 +198,15 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 | Prueba | Comando | Resultado |
 | :---- | :---- | :---- |
-| ping intra-LAN (PC-USER ↔ SRV) | <!-- --> | <!-- --> |
-| traceroute a ISP (loopback) | <!-- --> | <!-- --> |
+| ping EDGE → ISP-1 (vecino directo, F1) | en EDGE: `/ping 192.0.2.1 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/edge-ips-y-pings.png` |
+| ping EDGE → ISP-2 (vecino directo, F1) | en EDGE: `/ping 192.0.2.5 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/edge-ips-y-pings.png` |
+| ping ISP-1 → EDGE (vecino directo, F1) | en ISP-1: `/ping 192.0.2.2 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/isp1-isp2-ips-y-pings.png` |
+| ping ISP-2 → EDGE (vecino directo, F1) | en ISP-2: `/ping 192.0.2.6 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/isp1-isp2-ips-y-pings.png` |
+| Verificación independiente de R5 (F1) | `/ip address print` + ping al vecino en EDGE, ISP-1 e ISP-2 | OK — `capturas/f1/edge-ips-ping.png`, `isp1-ips-ping.png`, `isp2-ips-ping.png` |
+| ping EDGE → CORE-1 / CORE-2 (vecinos directos, F1) | en EDGE: `/ping 10.0.0.2` y `/ping 10.0.0.6` | OK — `capturas/f1/edge-core-pings.png` (R3/R4) |
+| ping entre vecinos de CORE y DIST (core-core, core-dist y dist-dist por las dos LANs, F1) | `/ping` a cada vecino directo desde CORE-1, CORE-2, DIST-1 y DIST-2 | OK — `capturas/f1/core1-pings.png`, `core2-pings.png`, `dist1-pings.png`, `dist2-pings.png` (R3/R4) |
+| ping intra-LAN (PC-USER ↔ SRV) | <!-- F2 --> | pendiente de F2 (VRRP + OSPF) |
+| traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
 
 > Pegar capturas de las tablas: `/routing/route/print`, `/interface/vrrp/print`, `/routing/bgp/session/print`.
 
