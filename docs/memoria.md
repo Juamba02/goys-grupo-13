@@ -258,7 +258,7 @@ Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, 
 | Solo `ssh` y `winbox` habilitados, gestión acotada | ✅ | ✅ | ✅ | `edge-servicios`, `isp1-servicios`, `isp2-servicios` |
 | Descubrimiento de vecinos y `mac-server` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-neighbor-macserver`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
 | `mac-winbox` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-mac-winbox`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
-| IPs según IPAM 1.2 y ping al vecino | ✅ | ✅ | ✅ | `edge-ips-y-pings`, `isp1-isp2-ips-y-pings` |
+| IPs según IPAM 1.2 y ping al vecino | ✅ | ✅ | ✅ | `edge-ips-ping`, `isp1-ips-ping`, `isp2-ips-ping` |
 
 Resultado: **EDGE, ISP-1 e ISP-2 cumplen la política 1.3.** CORE-1/2 y DIST-1/2 quedan pendientes hasta que R3/R4 los configuren.
 
