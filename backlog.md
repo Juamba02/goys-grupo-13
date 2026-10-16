@@ -51,11 +51,13 @@
 
 ### Despliegue (7 CHR + 2 switches + 2 hosts)
 
-- [ ] [R1] [R3] [R4] Levantar y cablear los 7 CHR + 2 switches + 2 hosts según el diagrama, cada uno sus equipos
+- [ ] [R1] Levantar y cablear EDGE según el diagrama
+- [~] [R3] [R4] Levantar y cablear CORE-1/CORE-2/DIST-1/DIST-2 según el diagrama — direccionamiento y hardening ya preparados en `configs/` (rama `f1/core-distribucion`), falta cablear/aplicar en GNS3
 
 ### IPs de enlace + loopbacks
 
-- [ ] [R1] [R3] [R4] Configurar IPs de enlace + loopbacks según IPAM; verificar ping entre vecinos directos
+- [ ] [R1] Configurar IPs de enlace + loopback de EDGE; verificar ping a ISP-1/ISP-2/CORE-1/CORE-2
+- [~] [R3] [R4] Configurar IPs de enlace + loopback de CORE-1/CORE-2/DIST-1/DIST-2 según IPAM — scripts listos en `configs/core-1.rsc`, `core-2.rsc`, `dist-1.rsc`, `dist-2.rsc`; falta aplicarlos en GNS3 y verificar ping entre vecinos directos
 
 ### Snapshot BASE
 
@@ -63,7 +65,8 @@
 
 ### Hardening (los 7 routers)
 
-- [ ] [R1] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en los routers de cada uno
+- [ ] [R1] Password admin + usuario `monitor` + servicios apagados en EDGE
+- [~] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en CORE-1/CORE-2/DIST-1/DIST-2 — definido en `configs/`, passwords son placeholders a reemplazar por las reales antes de aplicar
 - [ ] [R5] Verificar que el hardening esté aplicado en los 7 routers
 
 ### Backup inicial (`/export`)
