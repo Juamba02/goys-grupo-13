@@ -48,8 +48,8 @@ set [ find name=www-ssl ] disabled=yes
 set [ find name=api ] disabled=yes
 set [ find name=api-ssl ] disabled=yes
 set [ find name=reverse-proxy ] disabled=yes
-set [ find name=ssh ] address=203.0.113.2/32
-set [ find name=winbox ] address=203.0.113.2/32
+set [ find name=ssh ] available-from=203.0.113.2/32
+set [ find name=winbox ] available-from=203.0.113.2/32
 
 /ip ssh set strong-crypto=yes
 
