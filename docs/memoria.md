@@ -247,6 +247,27 @@ Verificación: `show ip` en cada host. El ping al gateway (`ping 10.10.10.1` / `
 - **reverse-proxy:** servicio nuevo de RouterOS 7.24 que no estaba en la lista de la política; también se apaga.
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
 
+**Verificación independiente de R5 (QA) — 16/10/2026:**
+
+Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, CHR 7.24.5, MAC conservadas), separada de la evidencia de implementación que tomó R1/R2. Se comparó la salida en vivo de cada router contra su script de `configs/` y contra esta política.
+
+| Control | EDGE | ISP-1 | ISP-2 | Evidencia |
+| :---- | :----: | :----: | :----: | :---- |
+| `admin` con clave (`full`) y `monitor` habilitado (`read`) | ✅ | ✅ | ✅ | `edge-monitor-solo-lectura`, `isp1-monitor-solo-lectura`, `isp2-monitor-solo-lectura` |
+| `monitor` no puede cambiar la config (`not enough permissions`) | ✅ | ✅ | ✅ | ídem |
+| Solo `ssh` y `winbox` habilitados, gestión acotada | ✅ | ✅ | ✅ | `edge-servicios`, `isp1-servicios`, `isp2-servicios` |
+| Descubrimiento de vecinos y `mac-server` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-neighbor-macserver`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
+| `mac-winbox` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-mac-winbox`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
+| IPs según IPAM 1.2 y ping al vecino | ✅ | ✅ | ✅ | `edge-ips-y-pings`, `isp1-isp2-ips-y-pings` |
+
+Resultado: **EDGE, ISP-1 e ISP-2 cumplen la política 1.3.** CORE-1/2 y DIST-1/2 quedan pendientes hasta que R3/R4 los configuren.
+
+Observaciones:
+
+- **Recomendación (no es incumplimiento):** en ISP-1 e ISP-2, `ether2`–`ether4` están habilitadas sin uso (sin cableado; se ven en `isp1-neighbor-macserver` / `isp2-neighbor-macserver`). La política no exige apagar puertos sin uso, pero es buena práctica de hardening: `/interface ethernet disable ether2,ether3,ether4`. Decisión de R2.
+- Las capturas de `monitor` de EDGE e ISP-1 (de #4) muestran el comentario anterior "consultas y SNMP": son previas a la review. En la verificación de R5 los routers ya tienen "solo lectura / consultas", igual que el script.
+- El servicio dinámico `discover` (5678/udp) que aparece en EDGE es el descubrimiento de vecinos de RouterOS; queda limitado a la lista `LAN`. En los ISP no aparece porque el descubrimiento está en `none`.
+
 > Prueba de seguridad obligatoria: adyacencia OSPF / sesión BGP debe **fallar** con clave incorrecta. Documentar el resultado.
 
 ---
