@@ -2,6 +2,8 @@
 # Cableado en GNS3:
 #   ether1 -> ISP-1   ether2 -> ISP-2   ether3 -> CORE-1   ether4 -> CORE-2
 # Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
+# Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
+# los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -68,6 +70,7 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 /ip socks set enabled=no
 /ip upnp set enabled=no
 /ip proxy set enabled=no
+# 7.24: ddns-enabled=no ya no es valido y cloud no esta soportado en CHR free
 /ip cloud set update-time=no
 /ip dns set allow-remote-requests=no
 /tool bandwidth-server set enabled=no
