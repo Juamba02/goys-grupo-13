@@ -346,6 +346,15 @@ Observaciones:
 | 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en EDGE, ISP-1 e ISP-2: capturas, memoria §5 y backlog (`e75babe`, `107f0ce`, `fabf518`) | QA independiente de F1 | Revertir los commits |
 | 16/10/2026 | Tomas Costa (R5) | Hosts PC-USER y SRV configurados en VPCS (solo lab) y evidencia (`ac3a6d6`, `258c692`) | F1: 2 hosts levantados | En VPCS `clear ip`; revertir los commits |
 | 16/10/2026 | Tomas Costa (R5) | Correcciones de la review de R1/R2 al PR #7: merge de `main`, fechas y roles del change log, restore sin IP, hosts en 3.8 y evidencia propia de IPs y ping (`511ed47`, `b48e84f`, `1574b05`, `48e1b4c`, `6b9c9b5`, `559b7fe`) | Review R1/R2 | Revertir los commits |
+| 15–16/10/2026 | Juan Bautista Aramberri (R3/R4) | IPs, loopback y hardening de CORE-1, CORE-2, DIST-1 y DIST-2: scripts, memoria y backlog (`6ac4ffe`, `a4f8ac8`, `4c04972`, `3ad25d4`, `082152d`, `20ab13a`, `314143e`, `35587af`, `96f005d`) | F1: direccionamiento (IPAM 1.2) y política de seguridad 1.3 | Revertir los commits y borrar las direcciones en el router |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | Bloque `/ip service` aplicado de nuevo en CORE-1 (sin commit, solo en el router) | Se perdió una línea al pegar el script | Restaurar el backup BASE |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | Capturas de CORE/DIST y de ping EDGE → CORE (`5916e9f`, `9a35806`) | Evidencia para las secciones 4 y 5 | Revertir los commits |
+| 16/10/2026 | Joaquin Mazza (R2) | `ether2`–`ether4` apagadas en ISP-1 e ISP-2, con capturas (`50ff3c1`, `13f1c41`) | Recomendación de R5 en §5 | `/interface ethernet enable ether2,ether3,ether4` |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | Memoria §2, §3.1–3.3 y §4.1 de EDGE e ISP (`fbe5bca`, `6a69d78`, `c42a112`) | Documentar F1 de R1/R2 | Revertir los commits |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `available-from=` en `ssh`/`winbox` de los 7 scripts (`45e7813`) y `CLAUDE.md` en `.gitignore` (`b182efc`) | Review R5: `address=` deprecado en 7.24 | Revertir los commits |
+| 16/10/2026 | Grupo | Merges con merge commit: #9 (`8be9a7c`) y #8 (`2362d2c`) por R5, #11 (`832ea9f`) por R1/R2 y #10 (`0f94199`) por R3/R4; merges de `main` en las ramas (`e0744f6`, `22c271d`) | Reviews aprobadas | `git revert -m 1 <merge>` |
+| 16/10/2026 | Tomas Costa (R5) | Backups BASE de CORE/DIST y `_puertos` de ISP-1/ISP-2 (`3f8bd42`) y registro en §6.2 (`e73d3ff`) | Política de backup 1.4: BASE 7/7 y backup post-cambio | No aplica (solo respaldo) |
+| 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en CORE/DIST (CORE/DIST cargados en el lab de R5, sin commit), capturas, memoria y backlog (`38a281c`, `1a53199`, `1a48996`) | QA independiente de F1: cierre de F1 | Revertir los commits |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
