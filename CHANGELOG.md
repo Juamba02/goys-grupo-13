@@ -44,7 +44,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Tomas Costa (R5) | `ac3a6d6` | Capturas `show ip` de PC-USER y SRV | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `258c692` | Backlog: hosts hechos; restore probado movido a F4. Memoria 3.8 con la referencia a las capturas | `backlog.md`, `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `511ed47` | Change log: registro de la configuración de los hosts | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
-| 16/10/2026 | Tomas Costa (R5) | `b48e84f` | Merge de `main` en la rama del PR #7 (trae #6) antes de mergear, sin conflictos (review R1/R2) | rama `r5-f1-registro` | `git revert -m 1 b48e84f` |
+| 16/10/2026 | Tomas Costa (R5) | `b48e84f` | Merge de `main` en la rama del PR #7 (trae #6) antes de mergear, sin conflictos (review R1/R2) | rama `r5-f1-registro` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 eb54f13`) |
 | 16/10/2026 | Tomas Costa (R5) | `1574b05` | Fechas en hora local de los commits del 15/10 y rol (R3/R4) en las filas de F0 (review R1/R2) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `48e1b4c` | Memoria 6.2: restore sin IP (pegar el backup en la consola) y encabezado; 3.8 con el contenido de `configs/*.vpc` (review R1/R2) | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `6b9c9b5` | Capturas propias de IPs y ping al vecino en EDGE, ISP-1 e ISP-2 (log de login de EDGE tapado) | `capturas/f1/` | Revertir el commit |
@@ -53,7 +53,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `6ac4ffe` | IPs de enlace, loopback y hardening base de CORE-1, CORE-2, DIST-1 y DIST-2 | CORE-1, CORE-2, DIST-1, DIST-2 | Revertir el commit y en el router `/ip address remove` de las direcciones agregadas |
 | 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `a4f8ac8` | Memoria: configuración de CORE/DIST (pendiente de verificar en GNS3) | `docs/memoria.md` | Revertir el commit |
 | 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `4c04972` | Backlog: avance de R3/R4 en F1 (se saca después en `35587af`) | `backlog.md` | Revertir el commit |
-| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `e0744f6` | Merge de `main` en la rama del PR #8 | rama `f1/core-distribucion` | `git revert -m 1 e0744f6` |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `e0744f6` | Merge de `main` en la rama del PR #8 | rama `f1/core-distribucion` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 2362d2c`) |
 | 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `3ad25d4` | Scripts de CORE/DIST con la misma estructura que EDGE/ISP: claves por consola y servicios con `find` para 7.24 (review R1/R2) | CORE-1, CORE-2, DIST-1, DIST-2 (solo script) | Revertir el commit |
 | 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `082152d` | Memoria §3: configs de CORE/DIST actualizadas | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `20ab13a` | Usuario `monitor` al final de los scripts de CORE/DIST (al pegar, RouterOS pedía la clave y se comía la línea siguiente) | CORE-1, CORE-2, DIST-1, DIST-2 (solo script) | Revertir el commit |
@@ -70,7 +70,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `96f005d` | Memoria §3: referencia a `configs/` y resumen por router; nota inicial actualizada (review R1/R2) | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `b182efc` | `.gitignore`: se ignora `CLAUDE.md` (contexto local) | `.gitignore` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `2362d2c` | Merge del PR #8 con merge commit, tras las reviews de R1/R2 y R5 | `main` | `git revert -m 1 2362d2c` |
-| 16/10/2026 | Joaquin Mazza (R1/R2) | `22c271d` | Merge de `main` en la rama del PR #10 | rama `f1-memoria-edge-isp` | `git revert -m 1 22c271d` |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `22c271d` | Merge de `main` en la rama del PR #10 | rama `f1-memoria-edge-isp` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 0f94199`) |
 | 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `45e7813` | `available-from=` en lugar de `address=` (deprecado en 7.24) en `ssh`/`winbox` de los 7 scripts (review R5) | Los 7 routers (solo script) | Revertir el commit |
 | 16/10/2026 | Joaquin Mazza (R1/R2) | `832ea9f` | Merge del PR #11 con merge commit | `main` | `git revert -m 1 832ea9f` |
 | 16/10/2026 | Joaquin Mazza (R1/R2) | `c42a112` | Memoria §3.1–3.3 con el mismo formato que CORE/DIST, lista `CUSTOMER` y `ether2`–`ether4` (review R3/R4) | `docs/memoria.md` | Revertir el commit |

@@ -352,7 +352,7 @@ Observaciones:
 | 16/10/2026 | Joaquin Mazza (R2) | `ether2`–`ether4` apagadas en ISP-1 e ISP-2, con capturas (`50ff3c1`, `13f1c41`) | Recomendación de R5 en §5 | `/interface ethernet enable ether2,ether3,ether4` |
 | 16/10/2026 | Joaquin Mazza (R1/R2) | Memoria §2, §3.1–3.3 y §4.1 de EDGE e ISP (`fbe5bca`, `6a69d78`, `c42a112`) | Documentar F1 de R1/R2 | Revertir los commits |
 | 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `available-from=` en `ssh`/`winbox` de los 7 scripts (`45e7813`) y `CLAUDE.md` en `.gitignore` (`b182efc`) | Review R5: `address=` deprecado en 7.24 | Revertir los commits |
-| 16/10/2026 | Grupo | Merges con merge commit: #9 (`8be9a7c`) y #8 (`2362d2c`) por R5, #11 (`832ea9f`) por R1/R2 y #10 (`0f94199`) por R3/R4; merges de `main` en las ramas (`e0744f6`, `22c271d`) | Reviews aprobadas | `git revert -m 1 <merge>` |
+| 16/10/2026 | Grupo | Merges con merge commit: #9 (`8be9a7c`) y #8 (`2362d2c`) por R5, #11 (`832ea9f`) por R1/R2 y #10 (`0f94199`) por R3/R4; merges de `main` en las ramas (`e0744f6`, `22c271d`) | Reviews aprobadas | Merge del PR: `git revert -m 1 <merge>`. Los merges de sincronización no se revierten solos: van junto con el merge de su PR |
 | 16/10/2026 | Tomas Costa (R5) | Backups BASE de CORE/DIST y `_puertos` de ISP-1/ISP-2 (`3f8bd42`) y registro en §6.2 (`e73d3ff`) | Política de backup 1.4: BASE 7/7 y backup post-cambio | No aplica (solo respaldo) |
 | 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en CORE/DIST (CORE/DIST cargados en el lab de R5, sin commit), capturas, memoria y backlog (`38a281c`, `1a53199`, `1a48996`, `983dcfb`, `5133e61`, `ead42d8`) | QA independiente de F1: cierre de F1 | Revertir los commits |
 
