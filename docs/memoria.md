@@ -105,7 +105,7 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ## 3. Configuración
 
-> Un bloque por dispositivo — **pendiente de F1/F2/F3** (se completa a medida que cada router queda configurado). Se puede referenciar el archivo `.rsc` del repo y pegar el contenido final.
+> Un bloque por dispositivo con la config de F1; el script completo está en `configs/<ROUTER>.rsc`. OSPF/VRRP/BGP se agregan en F2/F3.
 
 ### 3.1 ISP-1
 
@@ -127,27 +127,35 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ### 3.4 CORE-1
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/CORE-1.rsc`](../configs/CORE-1.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 10.0.0.2/30 → EDGE; `ether2` 10.0.0.9/30 → CORE-2 (core-core); `ether3` 10.0.0.13/30 → DIST-1; `ether4` 10.0.0.17/30 → DIST-2; `loopback` 10.255.255.1/32 (router-id).
+- **Interfaces:** lista `LAN` con los 4 enlaces y la loopback.
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.5 CORE-2
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/CORE-2.rsc`](../configs/CORE-2.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 10.0.0.6/30 → EDGE; `ether2` 10.0.0.10/30 → CORE-1 (core-core); `ether3` 10.0.0.21/30 → DIST-1; `ether4` 10.0.0.25/30 → DIST-2; `loopback` 10.255.255.2/32 (router-id).
+- **Interfaces:** lista `LAN` con los 4 enlaces y la loopback.
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.6 DIST-1
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/DIST-1.rsc`](../configs/DIST-1.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 10.0.0.14/30 → CORE-1; `ether2` 10.0.0.22/30 → CORE-2; `ether3` 10.10.10.2/24 → LAN USERS; `ether4` 10.10.20.2/24 → LAN SERVERS; `loopback` 10.255.255.4/32 (router-id).
+- **Interfaces:** lista `LAN` (enlaces a los CORE y loopback) y lista `ACCESS` (LANs USERS y SERVERS). Las IPs de las LANs son las físicas; la VIP de VRRP se agrega en F2.
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.7 DIST-2
 
-```routeros
-<!-- config final -->
-```
+Script completo: [`configs/DIST-2.rsc`](../configs/DIST-2.rsc). Resumen de F1:
+
+- **IPs:** `ether1` 10.0.0.18/30 → CORE-1; `ether2` 10.0.0.26/30 → CORE-2; `ether3` 10.10.10.3/24 → LAN USERS; `ether4` 10.10.20.3/24 → LAN SERVERS; `loopback` 10.255.255.5/32 (router-id).
+- **Interfaces:** lista `LAN` (enlaces a los CORE y loopback) y lista `ACCESS` (LANs USERS y SERVERS). Las IPs de las LANs son las físicas; la VIP de VRRP se agrega en F2.
+- **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 
 ### 3.8 Hosts (PC-USER / SRV)
 
@@ -233,7 +241,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 | Mecanismo | Dónde se aplicó | Verificación (¿cómo probaron que funciona?) |
 | :---- | :---- | :---- |
-| Hardening (usuarios/servicios) | EDGE, ISP-1, ISP-2 (F1). CORE/DIST pendiente (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions`. Capturas en `capturas/f1/` |
+| Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; en EDGE/ISP, login como `monitor` e intento de cambiar la identidad → `not enough permissions`; en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
 | OSPF MD5 | <!-- --> | <!-- --> |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
 | VRRP auth | <!-- --> | <!-- --> |
@@ -246,6 +254,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 - **Usuario `monitor`:** es solo para consultas en modo lectura (SSH, Winbox, consola). SNMP no usa los usuarios de `/user`; se configura aparte en F4 (monitoreo, R5).
 - **reverse-proxy:** servicio nuevo de RouterOS 7.24 que no estaba en la lista de la política; también se apaga.
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
+- **Usuario `monitor` al pegar el script por consola:** RouterOS 7.24 pide la clave en `/user add` y toma como clave la línea siguiente del pegado. En los scripts de CORE/DIST el usuario se crea al final para que no se pierda ninguna línea (en CORE-1 pasó y se corrigió aplicando de nuevo el bloque de `/ip service`).
 
 **Verificación independiente de R5 (QA) — 16/10/2026:**
 
