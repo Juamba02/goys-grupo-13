@@ -12,3 +12,6 @@ secrets/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Contexto local para Claude Code (no se versiona)
+CLAUDE.md
