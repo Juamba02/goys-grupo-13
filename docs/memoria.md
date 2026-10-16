@@ -151,19 +151,19 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ### 3.8 Hosts (PC-USER / SRV)
 
-Hosts VPCS de GNS3. Config versionada en `configs/PC-USER.vpc` y `configs/SRV.vpc` (formato que guarda `save` en VPCS).
+Hosts VPCS de GNS3. Config versionada en `configs/PC-USER.vpc` y `configs/SRV.vpc`, idéntica al `startup.vpc` que genera `save` en el proyecto:
 
 ```sh
-# PC-USER (LAN USERS)
+# configs/PC-USER.vpc (LAN USERS)
 set pcname PC-USER
-ip 10.10.10.10/24 10.10.10.1
-save
+ip 10.10.10.10 10.10.10.1 24
 
-# SRV (LAN SERVERS)
+# configs/SRV.vpc (LAN SERVERS)
 set pcname SRV
-ip 10.10.20.10/24 10.10.20.1
-save
+ip 10.10.20.10 10.10.20.1 24
 ```
+
+Para cargarla a mano en la consola del VPCS se puede tipear lo mismo, o la forma equivalente `ip 10.10.10.10/24 10.10.10.1`, y después `save` para que persista.
 
 Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `srv-ip.png`, 16/10/2026, R5). El ping al gateway (`ping 10.10.10.1` / `ping 10.10.20.1`) recién responde cuando VRRP esté activo en DIST-1/DIST-2 (F2).
 
@@ -302,7 +302,7 @@ Observaciones:
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export` + `/system backup save`) y de **restore probado** — **pendiente de F1/F4**.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para EDGE, ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -321,7 +321,13 @@ Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acota
 - **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los tres archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
 - **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
 
-**Restore probado:** pendiente (F4). Procedimiento: CHR limpio (`/system reset-configuration no-defaults=yes`) → `/import file-name=<archivo>.rsc` → recrear usuarios → verificar con `/ip address print`, `/ip service print` y ping al vecino → captura en `capturas/`.
+**Restore probado:** pendiente (F4). Procedimiento:
+
+1. Dejar el CHR limpio: `/system reset-configuration no-defaults=yes skip-backup=yes`. El router reinicia **sin ninguna IP** y con `admin` sin clave (pide una nueva en el primer login).
+2. Como no tiene IP, no se le puede subir el `.rsc` por red para usar `/import file-name=...`. En GNS3 se abre la consola del nodo y se **pega el contenido del backup** (conviene pegarlo por bloques, sección por sección, para que la consola no pierda caracteres).
+   - Alternativa: darle a mano solo la IP de un enlace (por ejemplo `/ip address add address=192.0.2.2/30 interface=ether1` en EDGE), subir el archivo desde un vecino y recién ahí `/import file-name=<archivo>.rsc`.
+3. Recrear usuarios (el `/export` no los trae): `/password` para `admin` y `/user add name=monitor group=read password=<clave>`.
+4. Verificar con `/ip address print`, `/ip service print` y ping al vecino; captura en `capturas/`.
 
 ### 6.3 Monitoreo
 
