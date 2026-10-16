@@ -332,7 +332,7 @@ Observaciones:
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para EDGE, ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backup post-cambio de ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -341,14 +341,25 @@ Observaciones:
 | `EDGE_20261015_base.rsc` | EDGE | Snapshot BASE (F1) | Joaquin Mazza (R1) | IPs de enlace, loopback, listas WAN/LAN, hardening |
 | `ISP-1_20261015_base.rsc` | ISP-1 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
 | `ISP-2_20261015_base.rsc` | ISP-2 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
-| _CORE-1, CORE-2, DIST-1, DIST-2_ | | Snapshot BASE (F1) | _pendiente (R3/R4)_ | |
+| `CORE-1_20261016_base.rsc` | CORE-1 | Snapshot BASE (F1) | Juan Bautista Aramberri (R3) | IPs de enlace, loopback, lista LAN, hardening |
+| `CORE-2_20261016_base.rsc` | CORE-2 | Snapshot BASE (F1) | Juan Bautista Aramberri (R3) | IPs de enlace, loopback, lista LAN, hardening |
+| `DIST-1_20261016_base.rsc` | DIST-1 | Snapshot BASE (F1) | Juan Bautista Aramberri (R4) | IPs de enlace y de las dos LAN, loopback, listas LAN/ACCESS, hardening |
+| `DIST-2_20261016_base.rsc` | DIST-2 | Snapshot BASE (F1) | Juan Bautista Aramberri (R4) | IPs de enlace y de las dos LAN, loopback, listas LAN/ACCESS, hardening |
+| `ISP-1_20261016_puertos.rsc` | ISP-1 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
+| `ISP-2_20261016_puertos.rsc` | ISP-2 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
 
-Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo (`2026-10-16 01:38`) es la hora UTC del router; en hora local corresponde al 15/10 22:38.
+Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo es la hora UTC del router (hora local = UTC − 3):
+
+- EDGE, ISP-1 e ISP-2, BASE: `2026-10-16 01:38` UTC → 15/10 22:38.
+- ISP-1 e ISP-2, `_puertos`: `2026-10-16 03:40` UTC → 16/10 00:40, después del commit `50ff3c1` del #9. Son el "después" del cambio y el BASE es el "antes" (política 1.4).
+- CORE-1, CORE-2, DIST-1 y DIST-2, BASE: `2026-10-16 16:06`–`16:08` UTC → 16/10 13:06–13:08. Ya guardan `available-from=` en `ssh`/`winbox`, que es lo que se cita como prueba en el #11.
+
+R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mismas IPs, servicios, listas y descubrimiento, y ninguno tiene claves.
 
 **Qué NO trae un `/export` (a tener en cuenta en el restore):**
 
 - **Contraseñas:** RouterOS 7 no las exporta, por eso los archivos se pueden versionar.
-- **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los tres archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
+- **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
 - **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
 
 **Restore probado:** pendiente (F4). Procedimiento:
