@@ -65,7 +65,7 @@
 ### Hardening (los 7 routers)
 
 - [~] [R1] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en los routers de cada uno — EDGE, ISP-1 e ISP-2 hechos (R1/R2); falta CORE/DIST (R3/R4)
-- [~] [R5] Verificar que el hardening esté aplicado en los 7 routers — EDGE, ISP-1 e ISP-2 revisados contra el `/export` base (servicios, MNDP, mac-server, gestión acotada); falta verificar `/user` en vivo (no sale en el `/export`) y CORE/DIST
+- [~] [R5] Verificar que el hardening esté aplicado en los 7 routers — EDGE, ISP-1 e ISP-2 verificados en vivo el 16/10 (usuarios, servicios, descubrimiento, mac-server, mac-winbox; ver memoria §5 y `capturas/f1/`); falta CORE-1/2 y DIST-1/2 (R3/R4)
 
 ### Backup inicial (`/export`)
 
