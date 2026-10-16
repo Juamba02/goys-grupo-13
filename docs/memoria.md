@@ -298,7 +298,7 @@ Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, 
 | :---- | :----: | :----: | :----: | :----: | :---- |
 | `admin` con clave (`full`) y `monitor` habilitado (`read`) | ✅ | ✅ | ✅ | ✅ | `core1-monitor-solo-lectura`, `core2-…`, `dist1-…`, `dist2-…` |
 | `monitor` no puede cambiar la config (`not enough permissions`) | ✅ | ✅ | ✅ | ✅ | ídem |
-| Solo `ssh` y `winbox` habilitados, con `available-from=10.0.0.0/24,10.255.255.0/24`; `bandwidth-server` en `no` | ✅ | ✅ | ✅ | ✅ | `core1-servicios`, `core2-servicios`, `dist1-servicios`, `dist2-servicios`, `dist1-servicios-reinicio` |
+| Solo `ssh` y `winbox` habilitados, con `available-from=10.0.0.0/24,10.255.255.0/24`; `bandwidth-server` en `no` | ✅ | ✅ | ✅ | ✅ | `core1-servicios`, `core2-servicios`, `dist1-servicios`, `dist2-servicios`, `dist1-servicios-reinicio`, `dist1-servicios-estable` |
 | Descubrimiento de vecinos, `mac-server` y `mac-winbox` en `LAN` (en los DIST, las LAN de usuarios y servidores quedan afuera: lista `ACCESS`) | ✅ | ✅ | ✅ | ✅ | `core1-neighbor-macserver`, `core2-…`, `dist1-…`, `dist2-…` |
 | IPs según IPAM 1.2 y ping a cada vecino directo | ✅ | ✅ | ✅ | ✅ | `core1-ips-ping`, `core2-ips-ping`, `dist1-ips-ping`, `dist2-ips-ping` |
 
@@ -307,7 +307,7 @@ Resultado: **los 7 routers cumplen la política 1.3.**
 Observaciones:
 
 - **`ether2`–`ether4` en ISP-1 e ISP-2:** R5 recomendó apagarlas porque estaban habilitadas sin uso. **Aplicada en el #9** (`50ff3c1`, capturas `isp1-interfaces` / `isp2-interfaces`, backup `_puertos` en 6.2).
-- **Servicios dinámicos después de reiniciar (CORE/DIST):** en la captura de implementación de DIST-1 (`dist1-ips-servicios-y-monitor`, tomada justo después de pegar el script) todavía aparecían `dhcp`, `dhcpclient` y `btest` como dinámicos (`D`). Después del reinicio ya no están: solo queda `discover`, el descubrimiento de vecinos limitado a `LAN` (`core1-servicios`, `dist1-servicios-reinicio`). Eran restos del `dhcp-client` borrado y del `bandwidth-server` antes de apagarlo.
+- **Servicios dinámicos después de reiniciar (CORE/DIST):** en la captura de implementación de DIST-1 (`dist1-ips-servicios-y-monitor`, tomada justo después de pegar el script) todavía aparecían `dhcp`, `dhcpclient` y `btest` como dinámicos (`D`). Después del reinicio, `btest` y `dhcp` ya no aparecen. En DIST-1, durante los primeros minutos después del arranque, sigue apareciendo `dhcpclient` (68/udp) (`dist1-servicios-reinicio`), aunque no hay ningún `dhcp-client` configurado: `/ip dhcp-client` y `/ipv6 dhcp-client` están vacíos. A los ~5 minutos desaparece y queda solo `discover`, el descubrimiento de vecinos limitado a `LAN`. Eso es lo que muestran también CORE-1, CORE-2 y DIST-2 (`core1-servicios`, `dist1-servicios-estable`). No es un servicio de gestión ni se puede deshabilitar desde `/ip service`; en F3, el filtro de entrada del plano de gestión debe descartar igual el tráfico no esperado.
 - **Al pegar por consola** (lo que pasó en el lab de R5, a tener en cuenta en el restore de 6.2 y en los drills):
   - Si la última línea copiada no lleva el salto de línea, queda escrita en el prompt sin ejecutarse. Pasó con `mac-winbox`, que quedó en `all` hasta que se corrió a mano. Conviene terminar cada bloque con un `print` de control.
   - Si en el primer login se aprieta Enter sin cargar la clave nueva, `admin` queda con la marca `E` (*expired*) en `/user print`, o sea con la clave vacía. Se corrige con `/password`.
