@@ -2,7 +2,7 @@
 
 Formato definido en `docs/memoria.md` sección 1.4. Cada fila corresponde a un commit (o grupo de commits de un mismo cambio lógico) del historial de git — no se completa "a mano" sin relación con los commits reales.
 
-Los PR #3 y #4 se mergearon con *squash*: sus commits originales no existen en `main`. En esas filas la columna Commit lleva el hash del squash en `main` y, entre paréntesis, el commit original de la rama (`f1-isp` / `f1-capturas`) para trazabilidad. Los cambios hechos solo en el router (sin commit) se registran igual, marcados como tales.
+Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen en `main`. En esas filas la columna Commit lleva el hash del squash en `main` y, entre paréntesis, el commit original de la rama (`f1-isp` / `f1-capturas` / `f1-capturas-review`) para trazabilidad. Los cambios hechos solo en el router (sin commit) se registran igual, marcados como tales.
 
 | Fecha | Autor (Rol) | Commit | Descripción | Sistemas afectados | Plan de rollback |
 | :-- | :-- | :-- | :-- | :-- | :-- |
@@ -31,5 +31,13 @@ Los PR #3 y #4 se mergearon con *squash*: sus commits originales no existen en `
 | 15/10/2026 | Tomas Costa (R5) | `68028ba` | Merge del PR #2 (F1 de EDGE) con merge commit, tras la review de R5 | `main` | `git revert -m 1 68028ba` |
 | 16/10/2026 | Tomas Costa (R5) | `a5f8819` | Backup base F1 (`/export`) de EDGE, ISP-1 e ISP-2, tomado por R1/R2 el 15/10 | `backups/` | No aplica (solo respaldo) |
 | 16/10/2026 | Tomas Costa (R5) | `752989e` | Memoria §6.2: registro de los backups base y procedimiento de restore | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `191de4a` | Change log de F0 y F1 en `CHANGELOG.md` y memoria §6.1; referencia al formato corregida (sección 1.4) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `590dc01` | Backlog: estado de F1 tras el merge de EDGE, ISP-1 e ISP-2; tareas nuevas de hosts y restore probado | `backlog.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `ec7ba15` | Diagrama: la referencia a la tabla de IPs apunta a la memoria 1.2 | `docs/diagramas/topologia.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `3398fa9` | Hosts PC-USER (10.10.10.10/24) y SRV (10.10.20.10/24) en el IPAM y config VPCS; `10.10.254.0/24` queda sin uso | `configs/*.vpc`, `docs/memoria.md` | Revertir el commit y en VPCS `clear ip` |
+| 16/10/2026 | Tomas Costa (R5) | `39d680f` | Hashes de los commits de R5 actualizados tras reescribir la rama (se quitó la atribución automática de los mensajes) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `d04a437` (`8547104`) | Capturas post-review: monitor en ISP-2, servicios de EDGE (reemplaza la de 10.0.0.0/8) y de ISP-1 | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `e75babe` | Capturas de la verificación de hardening de R5: servicios de ISP-2, descubrimiento/mac-server/mac-winbox en ISP-1 e ISP-2, mac-winbox en EDGE | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `107f0ce` | Memoria §5: verificación de hardening de R5 en EDGE, ISP-1 e ISP-2 y recomendación de apagar `ether2-4` en los ISP | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `fabf518` | Backlog: verificación de hardening hecha en EDGE, ISP-1 e ISP-2 (falta CORE/DIST) | `backlog.md` | Revertir el commit |
 
-**Pendiente de `main`:** `9c2a899` (capturas post-review: monitor en ISP-2, servicios de EDGE e ISP-1) se pusheó a `f1-capturas` después del merge del PR #4 y no está en `main`. Se carga acá cuando entre por un PR nuevo.
