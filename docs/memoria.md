@@ -116,21 +116,49 @@ En la captura, las etiquetas de GNS3 `0/0`, `1/0`, `2/0`, `3/0` corresponden a `
 
 ### 3.1 ISP-1
 
+Script completo de F1: [`configs/ISP-1.rsc`](../configs/ISP-1.rsc) (se importa sobre un CHR limpio; las claves se cargan por consola). Direccionamiento:
+
 ```routeros
-<!-- config final -->
+/ip address
+add address=192.0.2.1/30 interface=ether1 comment="EDGE"
+add address=203.0.113.1/32 interface=loopback comment="loopback"
 ```
+
+- Hardening: usuario `monitor` (grupo `read`); solo `ssh` y `winbox` activos, limitados a la loopback propia `203.0.113.1/32` (gestión solo por consola de GNS3); sin MNDP ni mac-server; `ether2`–`ether4` apagadas (sin uso).
+- Backups: `backups/ISP-1_20261015_base.rsc` (BASE); el posterior a apagar los puertos (`ISP-1_20261016_puertos.rsc`) lo sube R5.
+- F3: sesión eBGP con EDGE (TCP-MD5) y `default-originate` — pendiente.
 
 ### 3.2 ISP-2
 
+Script completo de F1: [`configs/ISP-2.rsc`](../configs/ISP-2.rsc). Igual que ISP-1 salvo sus datos:
+
 ```routeros
-<!-- config final -->
+/ip address
+add address=192.0.2.5/30 interface=ether1 comment="EDGE"
+add address=203.0.113.2/32 interface=loopback comment="loopback"
 ```
+
+- Hardening: igual que ISP-1, con gestión limitada a `203.0.113.2/32`.
+- Backups: `backups/ISP-2_20261015_base.rsc` (BASE); el posterior a apagar los puertos (`ISP-2_20261016_puertos.rsc`) lo sube R5.
+- F3: sesión eBGP con EDGE (TCP-MD5) y `default-originate` — pendiente.
 
 ### 3.3 EDGE
 
+Script completo de F1: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Direccionamiento:
+
 ```routeros
-<!-- config final -->
+/ip address
+add address=192.0.2.2/30 interface=ether1 comment="ISP-1"
+add address=192.0.2.6/30 interface=ether2 comment="ISP-2"
+add address=10.0.0.1/30 interface=ether3 comment="CORE-1"
+add address=10.0.0.5/30 interface=ether4 comment="CORE-2"
+add address=10.255.255.3/32 interface=loopback comment="loopback"
 ```
+
+- Listas de interfaces: `WAN` (ether1, ether2) y `LAN` (ether3, ether4, loopback), para el firewall de F3.
+- Hardening: usuario `monitor` (grupo `read`); solo `ssh` y `winbox` activos, limitados a `10.0.0.0/24,10.255.255.0/24` (las LANs de usuarios quedan afuera); MNDP y mac-server solo en `LAN`.
+- Backup: `backups/EDGE_20261015_base.rsc` (BASE).
+- F2/F3: OSPF área 0 con MD5 hacia CORE-1/CORE-2, eBGP con ISP-1/ISP-2 (TCP-MD5), redistribución y firewall — pendiente.
 
 ### 3.4 CORE-1
 
