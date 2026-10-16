@@ -45,6 +45,8 @@ Principios: espacio privado RFC 1918 (`10.0.0.0/8`) para toda la infraestructura
 | CORE ↔ DIST-2 (×2) | CORE-1↔DIST-2: 10.0.0.16/30<br>CORE-2↔DIST-2: 10.0.0.24/30 | CORE-1: 10.0.0.17<br>CORE-2: 10.0.0.25 | DIST-2: 10.0.0.18<br>DIST-2: 10.0.0.26 |
 | USERS (gateway VRRP) | 10.10.10.0/24 | DIST-1: 10.10.10.2 | DIST-2: 10.10.10.3 |
 | SERVERS (gateway VRRP) | 10.10.20.0/24 | DIST-1: 10.10.20.2 | DIST-2: 10.10.20.3 |
+| Host USERS (PC-USER, VPCS) | 10.10.10.0/24 | PC-USER: 10.10.10.10 | gateway: 10.10.10.1 (VIP vrid 10) |
+| Host SERVERS (SRV, VPCS) | 10.10.20.0/24 | SRV: 10.10.20.10 | gateway: 10.10.20.1 (VIP vrid 20) |
 
 **VRRP:**
 
@@ -67,9 +69,11 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 | ISP-1 | 203.0.113.1 |
 | ISP-2 | 203.0.113.2 |
 
-**Notas adicionales (fuera del mínimo del template, para F4/monitoreo):** gestión fuera de banda de los switches en `10.10.254.0/24` (SW-USERS: `.1`, SW-SERVERS: `.2`).
+**Hosts:** cada LAN reserva `.1` para la IP virtual VRRP, `.2`/`.3` para DIST-1/DIST-2 y `.10` en adelante para hosts. Los hosts usan como gateway la IP virtual, nunca la IP real de un DIST, para que el failover sea transparente.
 
-**Verificación de no solapamiento:** los bloques `10.255.255.0/24` (loopbacks), `10.0.0.0/24` (enlaces internos), `10.10.10.0/24` y `10.10.20.0/24` (LANs), `10.10.254.0/24` (mgmt) y los rangos de documentación `192.0.2.0/24` / `203.0.113.0/24` (enlaces y loopbacks de ISP) son disjuntos entre sí; se verificó con `ipaddress` de Python que ningún par de bloques ni de subredes derivadas se superpone.
+**Gestión de switches (descartado):** en F0 se había reservado `10.10.254.0/24` para gestión fuera de banda de los switches. En el proyecto GNS3 los switches son *Ethernet switch* nativos (no gestionables, sin IP), así que ese bloque queda **sin uso**. Se mantiene reservado para no reasignarlo.
+
+**Verificación de no solapamiento:** los bloques `10.255.255.0/24` (loopbacks), `10.0.0.0/24` (enlaces internos), `10.10.10.0/24` y `10.10.20.0/24` (LANs), `10.10.254.0/24` (reservado, sin uso) y los rangos de documentación `192.0.2.0/24` / `203.0.113.0/24` (enlaces y loopbacks de ISP) son disjuntos entre sí; se verificó con `ipaddress` de Python que ningún par de bloques ni de subredes derivadas se superpone.
 
 ### 1.3 Política de seguridad
 
@@ -147,9 +151,21 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ### 3.8 Hosts (PC-USER / SRV)
 
+Hosts VPCS de GNS3. Config versionada en `configs/PC-USER.vpc` y `configs/SRV.vpc`, idéntica al `startup.vpc` que genera `save` en el proyecto:
+
 ```sh
-<!-- config final de los hosts -->
+# configs/PC-USER.vpc (LAN USERS)
+set pcname PC-USER
+ip 10.10.10.10 10.10.10.1 24
+
+# configs/SRV.vpc (LAN SERVERS)
+set pcname SRV
+ip 10.10.20.10 10.10.20.1 24
 ```
+
+Para cargarla a mano en la consola del VPCS se puede tipear lo mismo, o la forma equivalente `ip 10.10.10.10/24 10.10.10.1`, y después `save` para que persista.
+
+Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `srv-ip.png`, 16/10/2026, R5). El ping al gateway (`ping 10.10.10.1` / `ping 10.10.20.1`) recién responde cuando VRRP esté activo en DIST-1/DIST-2 (F2).
 
 ---
 
@@ -231,6 +247,27 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 - **reverse-proxy:** servicio nuevo de RouterOS 7.24 que no estaba en la lista de la política; también se apaga.
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
 
+**Verificación independiente de R5 (QA) — 16/10/2026:**
+
+Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, CHR 7.24.5, MAC conservadas), separada de la evidencia de implementación que tomó R1/R2. Se comparó la salida en vivo de cada router contra su script de `configs/` y contra esta política.
+
+| Control | EDGE | ISP-1 | ISP-2 | Evidencia |
+| :---- | :----: | :----: | :----: | :---- |
+| `admin` con clave (`full`) y `monitor` habilitado (`read`) | ✅ | ✅ | ✅ | `edge-monitor-solo-lectura`, `isp1-monitor-solo-lectura`, `isp2-monitor-solo-lectura` |
+| `monitor` no puede cambiar la config (`not enough permissions`) | ✅ | ✅ | ✅ | ídem |
+| Solo `ssh` y `winbox` habilitados, gestión acotada | ✅ | ✅ | ✅ | `edge-servicios`, `isp1-servicios`, `isp2-servicios` |
+| Descubrimiento de vecinos y `mac-server` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-neighbor-macserver`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
+| `mac-winbox` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-mac-winbox`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
+| IPs según IPAM 1.2 y ping al vecino | ✅ | ✅ | ✅ | `edge-ips-ping`, `isp1-ips-ping`, `isp2-ips-ping` |
+
+Resultado: **EDGE, ISP-1 e ISP-2 cumplen la política 1.3.** CORE-1/2 y DIST-1/2 quedan pendientes hasta que R3/R4 los configuren.
+
+Observaciones:
+
+- **Recomendación (no es incumplimiento):** en ISP-1 e ISP-2, `ether2`–`ether4` están habilitadas sin uso (sin cableado; se ven en `isp1-neighbor-macserver` / `isp2-neighbor-macserver`). La política no exige apagar puertos sin uso, pero es buena práctica de hardening: `/interface ethernet disable ether2,ether3,ether4`. Decisión de R2.
+- Las capturas de `monitor` de EDGE e ISP-1 (de #4) muestran el comentario anterior "consultas y SNMP": son previas a la review. En la verificación de R5 los routers ya tienen "solo lectura / consultas", igual que el script.
+- El servicio dinámico `discover` (5678/udp) que aparece en EDGE es el descubrimiento de vecinos de RouterOS; queda limitado a la lista `LAN`. En los ISP no aparece porque el descubrimiento está en `none`.
+
 > Prueba de seguridad obligatoria: adyacencia OSPF / sesión BGP debe **fallar** con clave incorrecta. Documentar el resultado.
 
 ---
@@ -243,13 +280,55 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 | Fecha | Responsable | Cambio | Motivo | Cómo se revierte |
 | :---- | :---- | :---- | :---- | :---- |
-| <!-- --> | <!-- --> | <!-- --> | <!-- --> | <!-- --> |
+| 01/10/2026 | Juan Bautista Aramberri (R3/R4) | Estructura del repo, memoria F0, formato de change log, backlog y README (`ba572d2`…`b211f46`) | F0: diseño, políticas y repo | Revertir los commits |
+| 15/10/2026 | Joaquin Mazza (R1) | IPs de enlace y loopback en EDGE (`cf78733`) | F1: direccionamiento según IPAM 1.2 | Revertir el commit y borrar las direcciones en el router |
+| 15/10/2026 | Joaquin Mazza (R2) | IPs de enlace y loopback en ISP-1 e ISP-2 (`a98d0f2` / `6f14db3`) | F1: direccionamiento según IPAM 1.2 | Revertir el commit y borrar las direcciones en el router |
+| 15/10/2026 | Joaquin Mazza (R2) | Hardening de ISP-1 e ISP-2 (`a98d0f2` / `3936eb5`) | F1: política de seguridad 1.3 | Revertir el commit y reactivar los servicios |
+| 15/10/2026 | Joaquin Mazza (R1) | Hardening de EDGE (`80d9d7d`) | F1: política de seguridad 1.3 | Revertir el commit y reactivar los servicios |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Servicios con `find` por nombre en EDGE, ISP-1 e ISP-2 (`ef7bbdf`, `a98d0f2` / `ad545c5`) | Bug de RouterOS 7.24: `set telnet ...` no encontraba el servicio | Revertir el commit |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Se borra el dhcp-client por defecto en EDGE, ISP-1 e ISP-2 (`4c44a91`, `a98d0f2` / `57be045`) | CHR lo trae en ether1 y no forma parte del diseño | `/ip dhcp-client add interface=ether1` |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Renombrado ether5-8 → ether1-4 y reasignación de IPs (sin commit, solo en el router) | Al migrar los nodos a VMs fijas de VirtualBox cambiaron las MAC | Restaurar el backup base |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Capturas de verificación de F1 (`619164b` / `b610656`, `a27df8a`) | Evidencia para las secciones 2, 4 y 5 | Revertir el commit |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Gestión acotada: EDGE a `10.0.0.0/24,10.255.255.0/24`, ISP solo por consola (`9c3c2cc`, `a98d0f2` / `768642c`) | Review R5: `10.0.0.0/8` incluía las LANs de usuarios | Revertir el commit y volver al rango anterior |
+| 15/10/2026 | Joaquin Mazza (R1/R2) | Notas de import y de cloud en los scripts, memoria §5 con los desvíos (`253e0f3`, `a98d0f2` / `7d6e431`, `e8ac4ae`, `16af715`) | Review R5: documentar desvíos de la política | Revertir los commits |
+| 15/10/2026 | Tomas Costa (R5) | Merge del PR #2 con merge commit (`68028ba`) | Review de R5 aprobada | `git revert -m 1 68028ba` |
+| 15/10/2026 | Tomas Costa (R5) | Backup base F1 de EDGE, ISP-1 e ISP-2 (`a5f8819`) y registro en §6.2 (`752989e`) | Política de backup 1.4: snapshot BASE | No aplica (solo respaldo) |
+| 15/10/2026 | Tomas Costa (R5) | Change log, backlog, referencia del diagrama y hosts PC-USER/SRV en el IPAM (`191de4a`, `590dc01`, `ec7ba15`, `3398fa9`, `39d680f`) | Registro operativo de F1 y hosts (R5) | Revertir los commits |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | Capturas post-review de EDGE, ISP-1 e ISP-2 (`d04a437` / `8547104`) | Evidencia tras la review de R5 | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en EDGE, ISP-1 e ISP-2: capturas, memoria §5 y backlog (`e75babe`, `107f0ce`, `fabf518`) | QA independiente de F1 | Revertir los commits |
+| 16/10/2026 | Tomas Costa (R5) | Hosts PC-USER y SRV configurados en VPCS (solo lab) y evidencia (`ac3a6d6`, `258c692`) | F1: 2 hosts levantados | En VPCS `clear ip`; revertir los commits |
+| 16/10/2026 | Tomas Costa (R5) | Correcciones de la review de R1/R2 al PR #7: merge de `main`, fechas y roles del change log, restore sin IP, hosts en 3.8 y evidencia propia de IPs y ping (`511ed47`, `b48e84f`, `1574b05`, `48e1b4c`, `6b9c9b5`, `559b7fe`) | Review R1/R2 | Revertir los commits |
+
+> Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export` + `/system backup save`) y de **restore probado** — **pendiente de F1/F4**.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para EDGE, ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
-<!-- pegar evidencia -->
+**Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
+
+| Archivo | Router | Fase / motivo | Tomado por | Contenido |
+| :---- | :---- | :---- | :---- | :---- |
+| `EDGE_20261015_base.rsc` | EDGE | Snapshot BASE (F1) | Joaquin Mazza (R1) | IPs de enlace, loopback, listas WAN/LAN, hardening |
+| `ISP-1_20261015_base.rsc` | ISP-1 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
+| `ISP-2_20261015_base.rsc` | ISP-2 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
+| _CORE-1, CORE-2, DIST-1, DIST-2_ | | Snapshot BASE (F1) | _pendiente (R3/R4)_ | |
+
+Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo (`2026-10-16 01:38`) es la hora UTC del router; en hora local corresponde al 15/10 22:38.
+
+**Qué NO trae un `/export` (a tener en cuenta en el restore):**
+
+- **Contraseñas:** RouterOS 7 no las exporta, por eso los archivos se pueden versionar.
+- **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los tres archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
+- **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
+
+**Restore probado:** pendiente (F4). Procedimiento:
+
+1. Dejar el CHR limpio: `/system reset-configuration no-defaults=yes skip-backup=yes`. El router reinicia **sin ninguna IP** y con `admin` sin clave (pide una nueva en el primer login).
+2. Como no tiene IP, no se le puede subir el `.rsc` por red para usar `/import file-name=...`. En GNS3 se abre la consola del nodo y se **pega el contenido del backup** (conviene pegarlo por bloques, sección por sección, para que la consola no pierda caracteres).
+   - Alternativa: darle a mano solo la IP de un enlace (por ejemplo `/ip address add address=192.0.2.2/30 interface=ether1` en EDGE), subir el archivo desde un vecino y recién ahí `/import file-name=<archivo>.rsc`.
+3. Recrear usuarios (el `/export` no los trae): `/password` para `admin` y `/user add name=monitor group=read password=<clave>`.
+4. Verificar con `/ip address print`, `/ip service print` y ping al vecino; captura en `capturas/`.
 
 ### 6.3 Monitoreo
 
