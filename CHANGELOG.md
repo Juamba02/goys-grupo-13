@@ -40,4 +40,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Tomas Costa (R5) | `e75babe` | Capturas de la verificación de hardening de R5: servicios de ISP-2, descubrimiento/mac-server/mac-winbox en ISP-1 e ISP-2, mac-winbox en EDGE | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `107f0ce` | Memoria §5: verificación de hardening de R5 en EDGE, ISP-1 e ISP-2 y recomendación de apagar `ether2-4` en los ISP | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `fabf518` | Backlog: verificación de hardening hecha en EDGE, ISP-1 e ISP-2 (falta CORE/DIST) | `backlog.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | sin commit (solo lab) | Hosts PC-USER (10.10.10.10/24) y SRV (10.10.20.10/24) configurados en VPCS con gateway VRRP y `save` | PC-USER, SRV | En VPCS: `clear ip` y `save` |
+| 16/10/2026 | Tomas Costa (R5) | `ac3a6d6` | Capturas `show ip` de PC-USER y SRV | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `258c692` | Backlog: hosts hechos; restore probado movido a F4. Memoria 3.8 con la referencia a las capturas | `backlog.md`, `docs/memoria.md` | Revertir el commit |
 
