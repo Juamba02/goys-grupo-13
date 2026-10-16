@@ -29,7 +29,7 @@ Los PR #3 y #4 se mergearon con *squash*: sus commits originales no existen en `
 | 15/10/2026 | Joaquin Mazza (R2) | `a98d0f2` (`768642c`) | ISP-1 e ISP-2 gestionados solo por consola (ssh/winbox a la /32 propia) y comentario de monitor sin SNMP (review R5) | ISP-1, ISP-2 | Revertir el commit y volver a `available-from=203.0.113.0/24` |
 | 15/10/2026 | Joaquin Mazza (R1/R2) | `16af715` | Comentario de monitor sin SNMP en EDGE y memoria §5 actualizada para los ISP | EDGE, `docs/memoria.md` | Revertir el commit |
 | 15/10/2026 | Tomas Costa (R5) | `68028ba` | Merge del PR #2 (F1 de EDGE) con merge commit, tras la review de R5 | `main` | `git revert -m 1 68028ba` |
-| 16/10/2026 | Tomas Costa (R5) | `759352b` | Backup base F1 (`/export`) de EDGE, ISP-1 e ISP-2, tomado por R1/R2 el 15/10 | `backups/` | No aplica (solo respaldo) |
-| 16/10/2026 | Tomas Costa (R5) | `31cf148` | Memoria §6.2: registro de los backups base y procedimiento de restore | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `a5f8819` | Backup base F1 (`/export`) de EDGE, ISP-1 e ISP-2, tomado por R1/R2 el 15/10 | `backups/` | No aplica (solo respaldo) |
+| 16/10/2026 | Tomas Costa (R5) | `752989e` | Memoria §6.2: registro de los backups base y procedimiento de restore | `docs/memoria.md` | Revertir el commit |
 
 **Pendiente de `main`:** `9c2a899` (capturas post-review: monitor en ISP-2, servicios de EDGE e ISP-1) se pusheó a `f1-capturas` después del merge del PR #4 y no está en `main`. Se carga acá cuando entre por un PR nuevo.
