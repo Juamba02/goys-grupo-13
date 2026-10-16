@@ -30,7 +30,7 @@
 - [x] [R5] Definir modelo de usuarios/privilegios (admin + monitor)
 - [x] [R5] Definir lista de servicios a deshabilitar en los 7 routers
 - [x] [R1] [R5] Definir mecanismo y alcance de claves de autenticación (OSPF MD5, BGP MD5, VRRP auth)
-- [ ] [R1] [R3] [R4] [R5] Acordar dónde se guardan las claves reales (gestor de contraseñas del grupo, fuera del repo)
+- [x] [R1] [R3] [R4] [R5] Acordar dónde se guardan las claves reales (gestor de contraseñas del grupo, fuera del repo) — en el gestor del grupo (confirmado por R1 en la review del #12)
 
 ### Política de operación (change log + backup)
 
@@ -41,9 +41,9 @@
 ### Repositorio git
 
 - [x] [R5] Crear estructura (README + backlog.md + carpetas docs/configs/backups/runbooks/capturas)
-- [ ] [R1] Crear el repo remoto del grupo (fork del repo base o repo nuevo) y dar acceso al docente
-- [ ] [R1] [R3] [R4] [R5] Hacer los commits iniciales (estructura + memoria F0), cada uno commiteando lo suyo
-- [ ] [R1] Confirmar con el docente la aprobación de F0 antes de tocar un nodo en GNS3
+- [x] [R1] Crear el repo remoto del grupo (fork del repo base o repo nuevo) y dar acceso al docente — `Juamba02/goys-grupo-13`, con acceso del docente (confirmado por R1 en la review del #12)
+- [x] [R1] [R3] [R4] [R5] Hacer los commits iniciales (estructura + memoria F0), cada uno commiteando lo suyo — los commits de F0 los hizo R3/R4 (`ba572d2`…`b211f46`); desde F1 cada uno commitea lo suyo
+- [x] [R1] Confirmar con el docente la aprobación de F0 antes de tocar un nodo en GNS3 — aprobada (confirmado por R1 en la review del #12)
 
 ---
 
