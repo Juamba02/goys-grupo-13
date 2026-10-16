@@ -65,3 +65,9 @@ set [ find name=winbox ] address=203.0.113.1/32
 /ip neighbor discovery-settings set discover-interface-list=none
 /tool mac-server set allowed-interface-list=none
 /tool mac-server mac-winbox set allowed-interface-list=none
+
+# puertos sin cableado: se apagan (review de R5)
+/interface ethernet
+set [ find default-name=ether2 ] disabled=yes comment="sin uso"
+set [ find default-name=ether3 ] disabled=yes comment="sin uso"
+set [ find default-name=ether4 ] disabled=yes comment="sin uso"
