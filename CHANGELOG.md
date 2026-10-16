@@ -6,11 +6,11 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 
 | Fecha | Autor (Rol) | Commit | Descripción | Sistemas afectados | Plan de rollback |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| 01/10/2026 | Juan Bautista Aramberri | `ba572d2` | Estructura inicial del repo (README, carpetas, .gitignore) | repo | Revertir el commit |
-| 01/10/2026 | Juan Bautista Aramberri | `ac53f5a` | Memoria F0: corrección del diagrama, IPAM, políticas de seguridad y operación | `docs/memoria.md` | Revertir el commit |
-| 01/10/2026 | Juan Bautista Aramberri | `2ffe3bb` | Formato de change log y política de backup | `CHANGELOG.md` | Revertir el commit |
-| 01/10/2026 | Juan Bautista Aramberri | `4f9212f` | Backlog con tareas F0 a F5 | `backlog.md` | Revertir el commit |
-| 01/10/2026 | Juan Bautista Aramberri | `d73cfca`, `b211f46` | README: resumen del lab, reparto de roles y correcciones | `README.md` | Revertir los commits |
+| 01/10/2026 | Juan Bautista Aramberri (R3/R4) | `ba572d2` | Estructura inicial del repo (README, carpetas, .gitignore) | repo | Revertir el commit |
+| 01/10/2026 | Juan Bautista Aramberri (R3/R4) | `ac53f5a` | Memoria F0: corrección del diagrama, IPAM, políticas de seguridad y operación | `docs/memoria.md` | Revertir el commit |
+| 01/10/2026 | Juan Bautista Aramberri (R3/R4) | `2ffe3bb` | Formato de change log y política de backup | `CHANGELOG.md` | Revertir el commit |
+| 01/10/2026 | Juan Bautista Aramberri (R3/R4) | `4f9212f` | Backlog con tareas F0 a F5 | `backlog.md` | Revertir el commit |
+| 01/10/2026 | Juan Bautista Aramberri (R3/R4) | `d73cfca`, `b211f46` | README: resumen del lab, reparto de roles y correcciones | `README.md` | Revertir los commits |
 | 15/10/2026 | Joaquin Mazza (R1) | `cf78733` | IPs de enlace y loopback en EDGE, listas WAN/LAN | EDGE | Revertir el commit y en el router `/ip address remove` de las direcciones agregadas |
 | 15/10/2026 | Joaquin Mazza (R2) | `a98d0f2` (`6f14db3`) | IPs de enlace y loopback en ISP-1 e ISP-2, lista CUSTOMER | ISP-1, ISP-2 | Revertir el commit y en el router `/ip address remove` de las direcciones agregadas |
 | 15/10/2026 | Joaquin Mazza (R2) | `a98d0f2` (`3936eb5`) | Hardening de ISP-1 e ISP-2: usuario monitor, servicios apagados, sin MNDP ni mac-server | ISP-1, ISP-2 | Revertir el commit y reactivar los servicios con `/ip service enable` |
@@ -29,13 +29,13 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 15/10/2026 | Joaquin Mazza (R2) | `a98d0f2` (`768642c`) | ISP-1 e ISP-2 gestionados solo por consola (ssh/winbox a la /32 propia) y comentario de monitor sin SNMP (review R5) | ISP-1, ISP-2 | Revertir el commit y volver a `available-from=203.0.113.0/24` |
 | 15/10/2026 | Joaquin Mazza (R1/R2) | `16af715` | Comentario de monitor sin SNMP en EDGE y memoria §5 actualizada para los ISP | EDGE, `docs/memoria.md` | Revertir el commit |
 | 15/10/2026 | Tomas Costa (R5) | `68028ba` | Merge del PR #2 (F1 de EDGE) con merge commit, tras la review de R5 | `main` | `git revert -m 1 68028ba` |
-| 16/10/2026 | Tomas Costa (R5) | `a5f8819` | Backup base F1 (`/export`) de EDGE, ISP-1 e ISP-2, tomado por R1/R2 el 15/10 | `backups/` | No aplica (solo respaldo) |
-| 16/10/2026 | Tomas Costa (R5) | `752989e` | Memoria §6.2: registro de los backups base y procedimiento de restore | `docs/memoria.md` | Revertir el commit |
-| 16/10/2026 | Tomas Costa (R5) | `191de4a` | Change log de F0 y F1 en `CHANGELOG.md` y memoria §6.1; referencia al formato corregida (sección 1.4) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
-| 16/10/2026 | Tomas Costa (R5) | `590dc01` | Backlog: estado de F1 tras el merge de EDGE, ISP-1 e ISP-2; tareas nuevas de hosts y restore probado | `backlog.md` | Revertir el commit |
-| 16/10/2026 | Tomas Costa (R5) | `ec7ba15` | Diagrama: la referencia a la tabla de IPs apunta a la memoria 1.2 | `docs/diagramas/topologia.md` | Revertir el commit |
-| 16/10/2026 | Tomas Costa (R5) | `3398fa9` | Hosts PC-USER (10.10.10.10/24) y SRV (10.10.20.10/24) en el IPAM y config VPCS; `10.10.254.0/24` queda sin uso | `configs/*.vpc`, `docs/memoria.md` | Revertir el commit y en VPCS `clear ip` |
-| 16/10/2026 | Tomas Costa (R5) | `39d680f` | Hashes de los commits de R5 actualizados tras reescribir la rama (se quitó la atribución automática de los mensajes) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 15/10/2026 | Tomas Costa (R5) | `a5f8819` | Backup base F1 (`/export`) de EDGE, ISP-1 e ISP-2, tomado por R1/R2 el 15/10 | `backups/` | No aplica (solo respaldo) |
+| 15/10/2026 | Tomas Costa (R5) | `752989e` | Memoria §6.2: registro de los backups base y procedimiento de restore | `docs/memoria.md` | Revertir el commit |
+| 15/10/2026 | Tomas Costa (R5) | `191de4a` | Change log de F0 y F1 en `CHANGELOG.md` y memoria §6.1; referencia al formato corregida (sección 1.4) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 15/10/2026 | Tomas Costa (R5) | `590dc01` | Backlog: estado de F1 tras el merge de EDGE, ISP-1 e ISP-2; tareas nuevas de hosts y restore probado | `backlog.md` | Revertir el commit |
+| 15/10/2026 | Tomas Costa (R5) | `ec7ba15` | Diagrama: la referencia a la tabla de IPs apunta a la memoria 1.2 | `docs/diagramas/topologia.md` | Revertir el commit |
+| 15/10/2026 | Tomas Costa (R5) | `3398fa9` | Hosts PC-USER (10.10.10.10/24) y SRV (10.10.20.10/24) en el IPAM y config VPCS; `10.10.254.0/24` queda sin uso | `configs/*.vpc`, `docs/memoria.md` | Revertir el commit y en VPCS `clear ip` |
+| 15/10/2026 | Tomas Costa (R5) | `39d680f` | Hashes de los commits de R5 actualizados tras reescribir la rama (se quitó la atribución automática de los mensajes) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Joaquin Mazza (R1/R2) | `d04a437` (`8547104`) | Capturas post-review: monitor en ISP-2, servicios de EDGE (reemplaza la de 10.0.0.0/8) y de ISP-1 | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `e75babe` | Capturas de la verificación de hardening de R5: servicios de ISP-2, descubrimiento/mac-server/mac-winbox en ISP-1 e ISP-2, mac-winbox en EDGE | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `107f0ce` | Memoria §5: verificación de hardening de R5 en EDGE, ISP-1 e ISP-2 y recomendación de apagar `ether2-4` en los ISP | `docs/memoria.md` | Revertir el commit |
