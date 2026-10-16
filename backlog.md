@@ -58,7 +58,7 @@
 
 - [ ] [R1] Configurar IPs de enlace + loopback de EDGE; verificar ping a ISP-1/ISP-2/CORE-1/CORE-2
 - [x] [R3] [R4] Configurar IPs de enlace + loopback de CORE-1/CORE-2/DIST-1/DIST-2 según IPAM (`configs/CORE-1.rsc`, `CORE-2.rsc`, `DIST-1.rsc`, `DIST-2.rsc`); ping OK entre core-core, core-dist y dist-dist por ambas LANs (`capturas/f1/*-pings.png`)
-- [ ] [R1] [R3] Ping EDGE ↔ CORE-1 / CORE-2 con los tres routers configurados en la misma topología (falta: cada lado se probó por separado)
+- [x] [R1] [R3] Ping EDGE ↔ CORE-1 / CORE-2 con los tres routers configurados en la misma topología (EDGE cargado con `configs/EDGE.rsc` en el GNS3 de R3/R4; `capturas/f1/edge-core-pings.png`)
 
 ### Snapshot BASE
 
