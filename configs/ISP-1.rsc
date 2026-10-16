@@ -37,8 +37,9 @@ add address=203.0.113.1/32 interface=loopback comment="loopback"
 #   /user set monitor password=<clave> disabled=no
 
 /user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas y SNMP"
+add name=monitor group=read disabled=yes comment="solo lectura / consultas"
 
+# gestion solo por consola de GNS3: ni el cliente ni el otro ISP tienen acceso
 /ip service
 set [ find name=telnet ] disabled=yes
 set [ find name=ftp ] disabled=yes
@@ -47,8 +48,8 @@ set [ find name=www-ssl ] disabled=yes
 set [ find name=api ] disabled=yes
 set [ find name=api-ssl ] disabled=yes
 set [ find name=reverse-proxy ] disabled=yes
-set [ find name=ssh ] address=203.0.113.0/24
-set [ find name=winbox ] address=203.0.113.0/24
+set [ find name=ssh ] address=203.0.113.1/32
+set [ find name=winbox ] address=203.0.113.1/32
 
 /ip ssh set strong-crypto=yes
 
