@@ -85,4 +85,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Tomas Costa (R5) | `983dcfb` | Change log: registro de los PR #8 a #11 y del cierre de F1 de R5 | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `5133e61` | Capturas de los servicios de DIST-1 justo después de reiniciar y pasados 12 minutos | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `ead42d8` | Memoria §5: `dhcpclient` dinámico transitorio en DIST-1 después del reinicio | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `fd744f6` | Change log: registro de las capturas de DIST-1 y la corrección de la §5 | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `363f22a` | Rollback de los merges de sincronización (`b48e84f`, `e0744f6`, `22c271d`): se revierten junto con el merge de su PR (review R1/R2) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `186e10e` | Backlog: F0 con repo remoto, commits iniciales, aprobación del docente y claves en el gestor, confirmados por R1 (review R1/R2) | `backlog.md` | Revertir el commit |
 
