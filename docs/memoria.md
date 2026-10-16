@@ -101,7 +101,9 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ## 3. Configuración
 
-> Un bloque por dispositivo — **pendiente de F1/F2/F3** (se completa a medida que cada router queda configurado). Se puede referenciar el archivo `.rsc` del repo y pegar el contenido final.
+> Un bloque por dispositivo — se completa a medida que cada router queda configurado.
+> **CORE-1, CORE-2, DIST-1, DIST-2 (F1, roles R3+R4):** direccionamiento + loopback + hardening base ya preparados en `configs/`, pendientes de aplicarse y verificarse en GNS3 (ver tareas `[~]` en `backlog.md`). OSPF y VRRP se agregan en F2.
+> **ISP-1, ISP-2, EDGE, Hosts (roles R1+R2+R5):** pendiente de F1/F2/F3.
 
 ### 3.1 ISP-1
 
@@ -124,25 +126,189 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 ### 3.4 CORE-1
 
 ```routeros
-<!-- config final -->
+# ============================================
+# CORE-1 - Failover Routing Lab (GOYS)
+# F1: direccionamiento IP + loopback + hardening base
+# OSPF (area 0, MD5) se configura en F2 - no incluido aca
+# ============================================
+# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
+# proyecto GNS3 antes de aplicar. Orden asumido: ether1=EDGE, ether2=CORE-2
+# (core-core), ether3=DIST-1, ether4=DIST-2.
+
+/system identity set name=CORE-1
+
+# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
+/ip address add address=10.0.0.2/30 interface=ether1 comment="enlace a EDGE"
+/ip address add address=10.0.0.9/30 interface=ether2 comment="enlace core-core a CORE-2"
+/ip address add address=10.0.0.13/30 interface=ether3 comment="enlace a DIST-1"
+/ip address add address=10.0.0.17/30 interface=ether4 comment="enlace a DIST-2"
+
+# --- Loopback / Router-ID ---
+/interface bridge add name=loopback0
+/ip address add address=10.255.255.1/32 interface=loopback0
+
+# --- Hardening (ver docs/memoria.md seccion 1.3) ---
+# Las passwords de abajo son placeholders: cambiarlas por las reales del
+# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
+# nunca la password real en este archivo.
+/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
+/user group add name=monitor-ro policy=read,test,winbox,ssh
+/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+
+/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
+/ip service set ssh port=22
+/ip cloud set ddns-enabled=no
+/tool bandwidth-server set enabled=no
+/ip upnp set enabled=no
+/ip socks set enabled=no
+
+# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
+# ping 10.0.0.1  -> EDGE
+# ping 10.0.0.10 -> CORE-2 (core-core)
+# ping 10.0.0.14 -> DIST-1
+# ping 10.0.0.18 -> DIST-2
 ```
 
 ### 3.5 CORE-2
 
 ```routeros
-<!-- config final -->
+# ============================================
+# CORE-2 - Failover Routing Lab (GOYS)
+# F1: direccionamiento IP + loopback + hardening base
+# OSPF (area 0, MD5) se configura en F2 - no incluido aca
+# ============================================
+# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
+# proyecto GNS3 antes de aplicar. Orden asumido: ether1=EDGE, ether2=CORE-1
+# (core-core), ether3=DIST-1, ether4=DIST-2.
+
+/system identity set name=CORE-2
+
+# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
+/ip address add address=10.0.0.6/30 interface=ether1 comment="enlace a EDGE"
+/ip address add address=10.0.0.10/30 interface=ether2 comment="enlace core-core a CORE-1"
+/ip address add address=10.0.0.21/30 interface=ether3 comment="enlace a DIST-1"
+/ip address add address=10.0.0.25/30 interface=ether4 comment="enlace a DIST-2"
+
+# --- Loopback / Router-ID ---
+/interface bridge add name=loopback0
+/ip address add address=10.255.255.2/32 interface=loopback0
+
+# --- Hardening (ver docs/memoria.md seccion 1.3) ---
+# Las passwords de abajo son placeholders: cambiarlas por las reales del
+# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
+# nunca la password real en este archivo.
+/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
+/user group add name=monitor-ro policy=read,test,winbox,ssh
+/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+
+/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
+/ip service set ssh port=22
+/ip cloud set ddns-enabled=no
+/tool bandwidth-server set enabled=no
+/ip upnp set enabled=no
+/ip socks set enabled=no
+
+# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
+# ping 10.0.0.5  -> EDGE
+# ping 10.0.0.9  -> CORE-1 (core-core)
+# ping 10.0.0.22 -> DIST-1
+# ping 10.0.0.26 -> DIST-2
 ```
 
 ### 3.6 DIST-1
 
 ```routeros
-<!-- config final -->
+# ============================================
+# DIST-1 - Failover Routing Lab (GOYS)
+# F1: direccionamiento IP + loopback + hardening base
+# VRRP (vrid 10/20) y OSPF se configuran en F2 - no incluidos aca.
+# Las IPs de LAN de abajo son la interfaz FISICA de DIST-1; el gateway
+# virtual VRRP (10.10.10.1 / 10.10.20.1) se agrega en F2.
+# ============================================
+# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
+# proyecto GNS3 antes de aplicar. Orden asumido: ether1=CORE-1, ether2=CORE-2,
+# ether3=LAN USERS, ether4=LAN SERVERS.
+
+/system identity set name=DIST-1
+
+# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
+/ip address add address=10.0.0.14/30 interface=ether1 comment="enlace a CORE-1"
+/ip address add address=10.0.0.22/30 interface=ether2 comment="enlace a CORE-2"
+/ip address add address=10.10.10.2/24 interface=ether3 comment="LAN USERS (fisica, master vrid 10 en F2)"
+/ip address add address=10.10.20.2/24 interface=ether4 comment="LAN SERVERS (fisica, backup vrid 20 en F2)"
+
+# --- Loopback / Router-ID ---
+/interface bridge add name=loopback0
+/ip address add address=10.255.255.4/32 interface=loopback0
+
+# --- Hardening (ver docs/memoria.md seccion 1.3) ---
+# Las passwords de abajo son placeholders: cambiarlas por las reales del
+# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
+# nunca la password real en este archivo.
+/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
+/user group add name=monitor-ro policy=read,test,winbox,ssh
+/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+
+/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
+/ip service set ssh port=22
+/ip cloud set ddns-enabled=no
+/tool bandwidth-server set enabled=no
+/ip upnp set enabled=no
+/ip socks set enabled=no
+
+# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
+# ping 10.0.0.13 -> CORE-1
+# ping 10.0.0.21 -> CORE-2
+# ping 10.10.10.3 -> DIST-2 (misma LAN USERS)
+# ping 10.10.20.3 -> DIST-2 (misma LAN SERVERS)
 ```
 
 ### 3.7 DIST-2
 
 ```routeros
-<!-- config final -->
+# ============================================
+# DIST-2 - Failover Routing Lab (GOYS)
+# F1: direccionamiento IP + loopback + hardening base
+# VRRP (vrid 10/20) y OSPF se configuran en F2 - no incluidos aca.
+# Las IPs de LAN de abajo son la interfaz FISICA de DIST-2; el gateway
+# virtual VRRP (10.10.10.1 / 10.10.20.1) se agrega en F2.
+# ============================================
+# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
+# proyecto GNS3 antes de aplicar. Orden asumido: ether1=CORE-1, ether2=CORE-2,
+# ether3=LAN USERS, ether4=LAN SERVERS.
+
+/system identity set name=DIST-2
+
+# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
+/ip address add address=10.0.0.18/30 interface=ether1 comment="enlace a CORE-1"
+/ip address add address=10.0.0.26/30 interface=ether2 comment="enlace a CORE-2"
+/ip address add address=10.10.10.3/24 interface=ether3 comment="LAN USERS (fisica, backup vrid 10 en F2)"
+/ip address add address=10.10.20.3/24 interface=ether4 comment="LAN SERVERS (fisica, master vrid 20 en F2)"
+
+# --- Loopback / Router-ID ---
+/interface bridge add name=loopback0
+/ip address add address=10.255.255.5/32 interface=loopback0
+
+# --- Hardening (ver docs/memoria.md seccion 1.3) ---
+# Las passwords de abajo son placeholders: cambiarlas por las reales del
+# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
+# nunca la password real en este archivo.
+/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
+/user group add name=monitor-ro policy=read,test,winbox,ssh
+/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+
+/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
+/ip service set ssh port=22
+/ip cloud set ddns-enabled=no
+/tool bandwidth-server set enabled=no
+/ip upnp set enabled=no
+/ip socks set enabled=no
+
+# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
+# ping 10.0.0.17 -> CORE-1
+# ping 10.0.0.25 -> CORE-2
+# ping 10.10.10.2 -> DIST-1 (misma LAN USERS)
+# ping 10.10.20.2 -> DIST-1 (misma LAN SERVERS)
 ```
 
 ### 3.8 Hosts (PC-USER / SRV)
