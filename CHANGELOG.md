@@ -43,4 +43,11 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Tomas Costa (R5) | sin commit (solo lab) | Hosts PC-USER (10.10.10.10/24) y SRV (10.10.20.10/24) configurados en VPCS con gateway VRRP y `save` | PC-USER, SRV | En VPCS: `clear ip` y `save` |
 | 16/10/2026 | Tomas Costa (R5) | `ac3a6d6` | Capturas `show ip` de PC-USER y SRV | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `258c692` | Backlog: hosts hechos; restore probado movido a F4. Memoria 3.8 con la referencia a las capturas | `backlog.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `511ed47` | Change log: registro de la configuración de los hosts | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `b48e84f` | Merge de `main` en la rama del PR #7 (trae #6) antes de mergear, sin conflictos (review R1/R2) | rama `r5-f1-registro` | `git revert -m 1 b48e84f` |
+| 16/10/2026 | Tomas Costa (R5) | `1574b05` | Fechas en hora local de los commits del 15/10 y rol (R3/R4) en las filas de F0 (review R1/R2) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `48e1b4c` | Memoria 6.2: restore sin IP (pegar el backup en la consola) y encabezado; 3.8 con el contenido de `configs/*.vpc` (review R1/R2) | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `6b9c9b5` | Capturas propias de IPs y ping al vecino en EDGE, ISP-1 e ISP-2 (log de login de EDGE tapado) | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `559b7fe` | Memoria §5: la fila de IPs y ping usa la evidencia propia de R5 (review R1/R2) | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | sin commit (solo lab) | ISP-1 e ISP-2 quedaron en estado *saved* de VirtualBox al apagar la PC y GNS3 no los arrancaba; se descartó el estado guardado (`VBoxManage discardstate`) | lab de R5 (ISP-1, ISP-2) | No aplica: la config de RouterOS está en disco |
 
