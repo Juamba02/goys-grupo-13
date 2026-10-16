@@ -176,10 +176,7 @@ add address=10.255.255.1/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo desde enlaces internos y loopbacks
 /ip service
@@ -207,6 +204,12 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"
 ```
 
 ### 3.5 CORE-2
@@ -262,10 +265,7 @@ add address=10.255.255.2/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo desde enlaces internos y loopbacks
 /ip service
@@ -293,6 +293,12 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"
 ```
 
 ### 3.6 DIST-1
@@ -349,10 +355,7 @@ add address=10.255.255.4/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
 /ip service
@@ -380,6 +383,12 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"
 ```
 
 ### 3.7 DIST-2
@@ -436,10 +445,7 @@ add address=10.255.255.5/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
 /ip service
@@ -467,6 +473,12 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"
 ```
 
 ### 3.8 Hosts (PC-USER / SRV)
