@@ -226,7 +226,8 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 **Desvíos respecto de la política 1.3 (F1):**
 
 - **ddns / cloud:** en RouterOS 7.24 `ddns-enabled=no` ya no es un valor válido y los servicios cloud no están soportados en CHR con licencia free. Solo se deja `update-time=no`.
-- **Red de gestión:** el IPAM no define una red de gestión para los routers. SSH y Winbox se limitan a los enlaces internos y las loopbacks (`10.0.0.0/24`, `10.255.255.0/24`) en EDGE, y al bloque propio del proveedor (`203.0.113.0/24`) en ISP-1 e ISP-2. Las LANs USERS y SERVERS quedan afuera. En F3 se refuerza con el firewall del EDGE.
+- **Red de gestión:** el IPAM no define una red de gestión para los routers. SSH y Winbox se limitan a los enlaces internos y las loopbacks (`10.0.0.0/24`, `10.255.255.0/24`) en EDGE; las LANs USERS y SERVERS quedan afuera y en F3 se refuerza con el firewall del EDGE. ISP-1 e ISP-2 se gestionan solo por consola de GNS3: SSH y Winbox quedan limitados a su propia loopback (`203.0.113.1/32` y `203.0.113.2/32`), así que ni el cliente ni el otro proveedor tienen acceso.
+- **Usuario `monitor`:** es solo para consultas en modo lectura (SSH, Winbox, consola). SNMP no usa los usuarios de `/user`; se configura aparte en F4 (monitoreo, R5).
 - **reverse-proxy:** servicio nuevo de RouterOS 7.24 que no estaba en la lista de la política; también se apaga.
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
 

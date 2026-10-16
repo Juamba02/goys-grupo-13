@@ -51,7 +51,7 @@ add address=10.255.255.3/32 interface=loopback comment="loopback"
 #   /user set monitor password=<clave> disabled=no
 
 /user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas y SNMP"
+add name=monitor group=read disabled=yes comment="solo lectura / consultas"
 
 # gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
 /ip service
