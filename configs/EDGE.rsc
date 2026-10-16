@@ -51,6 +51,7 @@ add address=10.255.255.3/32 interface=loopback comment="loopback"
 /user
 add name=monitor group=read disabled=yes comment="solo lectura / consultas y SNMP"
 
+# gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
 /ip service
 set [ find name=telnet ] disabled=yes
 set [ find name=ftp ] disabled=yes
@@ -59,8 +60,8 @@ set [ find name=www-ssl ] disabled=yes
 set [ find name=api ] disabled=yes
 set [ find name=api-ssl ] disabled=yes
 set [ find name=reverse-proxy ] disabled=yes
-set [ find name=ssh ] address=10.0.0.0/8
-set [ find name=winbox ] address=10.0.0.0/8
+set [ find name=ssh ] address=10.0.0.0/24,10.255.255.0/24
+set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 
 /ip ssh set strong-crypto=yes
 
