@@ -52,7 +52,7 @@
 ### Despliegue (7 CHR + 2 switches + 2 hosts)
 
 - [~] [R1] [R3] [R4] Levantar y cablear los 7 CHR + 2 switches + 2 hosts según el diagrama, cada uno sus equipos — proyecto GNS3 con los 11 nodos y 15 enlaces armado; EDGE, ISP-1 e ISP-2 levantados (R1/R2); falta levantar CORE/DIST (R3/R4)
-- [ ] [R5] Configurar los hosts PC-USER y SRV (VPCS) y agregar sus IPs al IPAM
+- [x] [R5] Configurar los hosts PC-USER y SRV (VPCS) y agregar sus IPs al IPAM — PC-USER 10.10.10.10/24 y SRV 10.10.20.10/24 con gateway VRRP, guardado con `save`; capturas `pc-user-ip` y `srv-ip`
 
 ### IPs de enlace + loopbacks
 
@@ -70,7 +70,6 @@
 ### Backup inicial (`/export`)
 
 - [~] [R5] Backup inicial (`/export`) de cada router versionado en `backups/` — 3/7: EDGE, ISP-1 e ISP-2; faltan CORE-1/2 y DIST-1/2 (R3/R4)
-- [ ] [R5] Restore probado de al menos un backup (se hace en F4, ver memoria §6.2)
 
 ---
 
@@ -122,6 +121,10 @@
 
 - [ ] [R5] Diseñar la plantilla de runbook (detección → respuesta → recuperación → post-mortem)
 - [ ] [R1] [R3] [R4] [R5] Ejecutar cada drill y medir tiempo de convergencia, rotando quién opera
+
+### Restore probado (política de backup 1.4)
+
+- [ ] [R5] Restore probado de al menos un backup sobre un CHR limpio (ver memoria §6.2)
 
 ### Monitoreo (SNMP/chequeos)
 
