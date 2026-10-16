@@ -96,7 +96,9 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 Proyecto GNS3 `goys-failover-g13` (F1): 11 nodos y 15 enlaces, los 7 routers como VMs de VirtualBox con MikroTik CHR 7.24.5. El diagrama de diseño corregido está en `docs/diagramas/topologia.md`.
 
-![Topología del proyecto GNS3](../capturas/f1/topologia-gns3.png)
+![Topología del proyecto GNS3](../capturas/f1/topologia-gns3-completa.png)
+
+Captura del 16/10/2026 en el lab de R5, con los 11 nodos encendidos y los 15 enlaces arriba. La primera captura (`topologia-gns3.png`, 15/10) es de cuando CORE/DIST todavía no estaban levantados.
 
 | Capa | Nodos | Enlaces |
 | :---- | :---- | :---- |
@@ -205,6 +207,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | Verificación independiente de R5 (F1) | `/ip address print` + ping al vecino en EDGE, ISP-1 e ISP-2 | OK — `capturas/f1/edge-ips-ping.png`, `isp1-ips-ping.png`, `isp2-ips-ping.png` |
 | ping EDGE → CORE-1 / CORE-2 (vecinos directos, F1) | en EDGE: `/ping 10.0.0.2` y `/ping 10.0.0.6` | OK — `capturas/f1/edge-core-pings.png` (R3/R4) |
 | ping entre vecinos de CORE y DIST (core-core, core-dist y dist-dist por las dos LANs, F1) | `/ping` a cada vecino directo desde CORE-1, CORE-2, DIST-1 y DIST-2 | OK — `capturas/f1/core1-pings.png`, `core2-pings.png`, `dist1-pings.png`, `dist2-pings.png` (R3/R4) |
+| Verificación independiente de R5 (F1) | `/ip address print` + ping a cada vecino directo en CORE-1, CORE-2, DIST-1 y DIST-2 (los DIST también entre sí por las dos LAN) | OK, 3/3 en todos — `capturas/f1/core1-ips-ping.png`, `core2-ips-ping.png`, `dist1-ips-ping.png`, `dist2-ips-ping.png` |
 | ping intra-LAN (PC-USER ↔ SRV) | <!-- F2 --> | pendiente de F2 (VRRP + OSPF) |
 | traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
 
@@ -261,7 +264,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 | Mecanismo | Dónde se aplicó | Verificación (¿cómo probaron que funciona?) |
 | :---- | :---- | :---- |
-| Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; en EDGE/ISP, login como `monitor` e intento de cambiar la identidad → `not enough permissions`; en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
+| Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions` (en CORE/DIST, prueba de R5); en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
 | OSPF MD5 | <!-- --> | <!-- --> |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
 | VRRP auth | <!-- --> | <!-- --> |
@@ -276,7 +279,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
 - **Usuario `monitor` al pegar el script por consola:** RouterOS 7.24 pide la clave en `/user add` y toma como clave la línea siguiente del pegado. En los scripts de CORE/DIST el usuario se crea al final para que no se pierda ninguna línea (en CORE-1 pasó y se corrigió aplicando de nuevo el bloque de `/ip service`).
 
-**Verificación independiente de R5 (QA) — 16/10/2026:**
+**Verificación independiente de R5 (QA) — 16/10/2026, los 7 routers:**
 
 Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, CHR 7.24.5, MAC conservadas), separada de la evidencia de implementación que tomó R1/R2. Se comparó la salida en vivo de cada router contra su script de `configs/` y contra esta política.
 
@@ -289,13 +292,29 @@ Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, 
 | `mac-winbox` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-mac-winbox`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
 | IPs según IPAM 1.2 y ping al vecino | ✅ | ✅ | ✅ | `edge-ips-ping`, `isp1-ips-ping`, `isp2-ips-ping` |
 
-Resultado: **EDGE, ISP-1 e ISP-2 cumplen la política 1.3.** CORE-1/2 y DIST-1/2 quedan pendientes hasta que R3/R4 los configuren.
+**CORE-1, CORE-2, DIST-1 y DIST-2** (16/10/2026): en el lab de R5 los cuatro eran CHR limpios. Se cargaron pegando por consola `configs/<ROUTER>.rsc` del repo (con #11 incluido), se reiniciaron y recién ahí se verificaron. Antes, con `/ip neighbor print`, se confirmó que el cableado coincide con el script: CORE-1 ve a EDGE, CORE-2, DIST-1 y DIST-2 por `ether1`–`ether4`; CORE-2 y los DIST ven a sus vecinos en el mismo orden.
+
+| Control | CORE-1 | CORE-2 | DIST-1 | DIST-2 | Evidencia |
+| :---- | :----: | :----: | :----: | :----: | :---- |
+| `admin` con clave (`full`) y `monitor` habilitado (`read`) | ✅ | ✅ | ✅ | ✅ | `core1-monitor-solo-lectura`, `core2-…`, `dist1-…`, `dist2-…` |
+| `monitor` no puede cambiar la config (`not enough permissions`) | ✅ | ✅ | ✅ | ✅ | ídem |
+| Solo `ssh` y `winbox` habilitados, con `available-from=10.0.0.0/24,10.255.255.0/24`; `bandwidth-server` en `no` | ✅ | ✅ | ✅ | ✅ | `core1-servicios`, `core2-servicios`, `dist1-servicios`, `dist2-servicios`, `dist1-servicios-reinicio` |
+| Descubrimiento de vecinos, `mac-server` y `mac-winbox` en `LAN` (en los DIST, las LAN de usuarios y servidores quedan afuera: lista `ACCESS`) | ✅ | ✅ | ✅ | ✅ | `core1-neighbor-macserver`, `core2-…`, `dist1-…`, `dist2-…` |
+| IPs según IPAM 1.2 y ping a cada vecino directo | ✅ | ✅ | ✅ | ✅ | `core1-ips-ping`, `core2-ips-ping`, `dist1-ips-ping`, `dist2-ips-ping` |
+
+Resultado: **los 7 routers cumplen la política 1.3.**
 
 Observaciones:
 
-- **Recomendación (no es incumplimiento):** en ISP-1 e ISP-2, `ether2`–`ether4` están habilitadas sin uso (sin cableado; se ven en `isp1-neighbor-macserver` / `isp2-neighbor-macserver`). La política no exige apagar puertos sin uso, pero es buena práctica de hardening: `/interface ethernet disable ether2,ether3,ether4`. Decisión de R2.
+- **`ether2`–`ether4` en ISP-1 e ISP-2:** R5 recomendó apagarlas porque estaban habilitadas sin uso. **Aplicada en el #9** (`50ff3c1`, capturas `isp1-interfaces` / `isp2-interfaces`, backup `_puertos` en 6.2).
+- **Servicios dinámicos después de reiniciar (CORE/DIST):** en la captura de implementación de DIST-1 (`dist1-ips-servicios-y-monitor`, tomada justo después de pegar el script) todavía aparecían `dhcp`, `dhcpclient` y `btest` como dinámicos (`D`). Después del reinicio ya no están: solo queda `discover`, el descubrimiento de vecinos limitado a `LAN` (`core1-servicios`, `dist1-servicios-reinicio`). Eran restos del `dhcp-client` borrado y del `bandwidth-server` antes de apagarlo.
+- **Al pegar por consola** (lo que pasó en el lab de R5, a tener en cuenta en el restore de 6.2 y en los drills):
+  - Si la última línea copiada no lleva el salto de línea, queda escrita en el prompt sin ejecutarse. Pasó con `mac-winbox`, que quedó en `all` hasta que se corrió a mano. Conviene terminar cada bloque con un `print` de control.
+  - Si en el primer login se aprieta Enter sin cargar la clave nueva, `admin` queda con la marca `E` (*expired*) en `/user print`, o sea con la clave vacía. Se corrige con `/password`.
+  - Si en `/user add` se aprieta Enter con `password:` vacío, `monitor` se crea sin clave. Se borra y se vuelve a crear.
+- **Clave de `monitor` en el lab de R5:** es propia del lab de R5, no la del gestor del grupo. El control verifica que exista, que esté habilitado, que sea `read` y que no pueda escribir, y eso no depende de cuál sea la clave.
 - Las capturas de `monitor` de EDGE e ISP-1 (de #4) muestran el comentario anterior "consultas y SNMP": son previas a la review. En la verificación de R5 los routers ya tienen "solo lectura / consultas", igual que el script.
-- El servicio dinámico `discover` (5678/udp) que aparece en EDGE es el descubrimiento de vecinos de RouterOS; queda limitado a la lista `LAN`. En los ISP no aparece porque el descubrimiento está en `none`.
+- El servicio dinámico `discover` (5678/udp) que aparece en EDGE, CORE y DIST es el descubrimiento de vecinos de RouterOS; queda limitado a la lista `LAN`. En los ISP no aparece porque el descubrimiento está en `none`.
 
 > Prueba de seguridad obligatoria: adyacencia OSPF / sesión BGP debe **fallar** con clave incorrecta. Documentar el resultado.
 
@@ -416,7 +435,7 @@ R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mi
 
 ### Redes
 
-- [ ] 7 CHR + 2 switches + 2 hosts levantados y cableados
+- [x] 7 CHR + 2 switches + 2 hosts levantados y cableados
 - [ ] VRRP operativo (2 grupos, load-sharing)
 - [ ] OSPF área 0 con adyacencias (incluido core–core)
 - [ ] BGP eBGP ×2 establecido (multi-homing)
@@ -424,7 +443,7 @@ R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mi
 
 ### Seguridad
 
-- [ ] Hardening aplicado (password, usuario mínimo, servicios apagados)
+- [x] Hardening aplicado (password, usuario mínimo, servicios apagados)
 - [ ] OSPF MD5 funcionando
 - [ ] BGP TCP-MD5 funcionando
 - [ ] VRRP auth funcionando
