@@ -51,4 +51,4 @@ flowchart TB
     SWS --- HS
 ```
 
-**11 nodos · 15 enlaces · 7 routers CHR**, igual a lo especificado en la consigna (sección 4). El detalle de IPs de cada enlace está en `docs/memoria.md` sección 2.
+**11 nodos · 15 enlaces · 7 routers CHR**, igual a lo especificado en la consigna (sección 4). El detalle de IPs de cada enlace está en `docs/memoria.md` sección 1.2.
