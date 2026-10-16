@@ -126,189 +126,347 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 ### 3.4 CORE-1
 
 ```routeros
-# ============================================
-# CORE-1 - Failover Routing Lab (GOYS)
-# F1: direccionamiento IP + loopback + hardening base
-# OSPF (area 0, MD5) se configura en F2 - no incluido aca
-# ============================================
-# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
-# proyecto GNS3 antes de aplicar. Orden asumido: ether1=EDGE, ether2=CORE-2
-# (core-core), ether3=DIST-1, ether4=DIST-2.
+# CORE-1 - core (transito puro) - router-id 10.255.255.1
+# Cableado en GNS3:
+#   ether1 -> EDGE   ether2 -> CORE-2   ether3 -> DIST-1   ether4 -> DIST-2
+# Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
+# Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
+# los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# OSPF se configura en F2, no van en este archivo.
+
+# ---------- F1: identidad, IPs de enlace y loopback ----------
 
 /system identity set name=CORE-1
 
-# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
-/ip address add address=10.0.0.2/30 interface=ether1 comment="enlace a EDGE"
-/ip address add address=10.0.0.9/30 interface=ether2 comment="enlace core-core a CORE-2"
-/ip address add address=10.0.0.13/30 interface=ether3 comment="enlace a DIST-1"
-/ip address add address=10.0.0.17/30 interface=ether4 comment="enlace a DIST-2"
+# CHR trae un dhcp-client en ether1 por defecto: no va en este diseno
+/ip dhcp-client remove [ find ]
 
-# --- Loopback / Router-ID ---
-/interface bridge add name=loopback0
-/ip address add address=10.255.255.1/32 interface=loopback0
+/interface ethernet
+set [ find default-name=ether1 ] comment="to EDGE"
+set [ find default-name=ether2 ] comment="to CORE-2 (core-core)"
+set [ find default-name=ether3 ] comment="to DIST-1"
+set [ find default-name=ether4 ] comment="to DIST-2"
 
-# --- Hardening (ver docs/memoria.md seccion 1.3) ---
-# Las passwords de abajo son placeholders: cambiarlas por las reales del
-# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
-# nunca la password real en este archivo.
-/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
-/user group add name=monitor-ro policy=read,test,winbox,ssh
-/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+/interface bridge
+add name=loopback protocol-mode=none comment="loopback / router-id"
 
-/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
-/ip service set ssh port=22
-/ip cloud set ddns-enabled=no
-/tool bandwidth-server set enabled=no
-/ip upnp set enabled=no
+/interface list
+add name=LAN comment="enlaces internos"
+
+/interface list member
+add list=LAN interface=ether1
+add list=LAN interface=ether2
+add list=LAN interface=ether3
+add list=LAN interface=ether4
+add list=LAN interface=loopback
+
+/ip address
+add address=10.0.0.2/30 interface=ether1 comment="EDGE"
+add address=10.0.0.9/30 interface=ether2 comment="CORE-2"
+add address=10.0.0.13/30 interface=ether3 comment="DIST-1"
+add address=10.0.0.17/30 interface=ether4 comment="DIST-2"
+add address=10.255.255.1/32 interface=loopback comment="loopback"
+
+# Verificacion (vecinos directos):
+#   /ping 10.0.0.1 count=3      (EDGE)
+#   /ping 10.0.0.10 count=3      (CORE-2)
+#   /ping 10.0.0.14 count=3      (DIST-1)
+#   /ping 10.0.0.18 count=3      (DIST-2)
+
+# ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
+# Las claves NO van en este archivo. Despues de importar, desde la consola:
+#   /password                                   (clave de admin, del gestor del grupo)
+#   /user set monitor password=<clave> disabled=no
+
+/user
+add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+
+# gestion solo desde enlaces internos y loopbacks
+/ip service
+set [ find name=telnet ] disabled=yes
+set [ find name=ftp ] disabled=yes
+set [ find name=www ] disabled=yes
+set [ find name=www-ssl ] disabled=yes
+set [ find name=api ] disabled=yes
+set [ find name=api-ssl ] disabled=yes
+set [ find name=reverse-proxy ] disabled=yes
+set [ find name=ssh ] address=10.0.0.0/24,10.255.255.0/24
+set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
+
+/ip ssh set strong-crypto=yes
+
 /ip socks set enabled=no
+/ip upnp set enabled=no
+/ip proxy set enabled=no
+# 7.24: ddns-enabled=no ya no es valido y cloud no esta soportado en CHR free
+/ip cloud set update-time=no
+/ip dns set allow-remote-requests=no
+/tool bandwidth-server set enabled=no
 
-# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
-# ping 10.0.0.1  -> EDGE
-# ping 10.0.0.10 -> CORE-2 (core-core)
-# ping 10.0.0.14 -> DIST-1
-# ping 10.0.0.18 -> DIST-2
+# descubrimiento de vecinos y acceso por MAC solo en enlaces internos
+/ip neighbor discovery-settings set discover-interface-list=LAN
+/tool mac-server set allowed-interface-list=LAN
+/tool mac-server mac-winbox set allowed-interface-list=LAN
 ```
 
 ### 3.5 CORE-2
 
 ```routeros
-# ============================================
-# CORE-2 - Failover Routing Lab (GOYS)
-# F1: direccionamiento IP + loopback + hardening base
-# OSPF (area 0, MD5) se configura en F2 - no incluido aca
-# ============================================
-# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
-# proyecto GNS3 antes de aplicar. Orden asumido: ether1=EDGE, ether2=CORE-1
-# (core-core), ether3=DIST-1, ether4=DIST-2.
+# CORE-2 - core (transito puro) - router-id 10.255.255.2
+# Cableado en GNS3:
+#   ether1 -> EDGE   ether2 -> CORE-1   ether3 -> DIST-1   ether4 -> DIST-2
+# Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
+# Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
+# los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# OSPF se configura en F2, no van en este archivo.
+
+# ---------- F1: identidad, IPs de enlace y loopback ----------
 
 /system identity set name=CORE-2
 
-# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
-/ip address add address=10.0.0.6/30 interface=ether1 comment="enlace a EDGE"
-/ip address add address=10.0.0.10/30 interface=ether2 comment="enlace core-core a CORE-1"
-/ip address add address=10.0.0.21/30 interface=ether3 comment="enlace a DIST-1"
-/ip address add address=10.0.0.25/30 interface=ether4 comment="enlace a DIST-2"
+# CHR trae un dhcp-client en ether1 por defecto: no va en este diseno
+/ip dhcp-client remove [ find ]
 
-# --- Loopback / Router-ID ---
-/interface bridge add name=loopback0
-/ip address add address=10.255.255.2/32 interface=loopback0
+/interface ethernet
+set [ find default-name=ether1 ] comment="to EDGE"
+set [ find default-name=ether2 ] comment="to CORE-1 (core-core)"
+set [ find default-name=ether3 ] comment="to DIST-1"
+set [ find default-name=ether4 ] comment="to DIST-2"
 
-# --- Hardening (ver docs/memoria.md seccion 1.3) ---
-# Las passwords de abajo son placeholders: cambiarlas por las reales del
-# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
-# nunca la password real en este archivo.
-/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
-/user group add name=monitor-ro policy=read,test,winbox,ssh
-/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+/interface bridge
+add name=loopback protocol-mode=none comment="loopback / router-id"
 
-/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
-/ip service set ssh port=22
-/ip cloud set ddns-enabled=no
-/tool bandwidth-server set enabled=no
-/ip upnp set enabled=no
+/interface list
+add name=LAN comment="enlaces internos"
+
+/interface list member
+add list=LAN interface=ether1
+add list=LAN interface=ether2
+add list=LAN interface=ether3
+add list=LAN interface=ether4
+add list=LAN interface=loopback
+
+/ip address
+add address=10.0.0.6/30 interface=ether1 comment="EDGE"
+add address=10.0.0.10/30 interface=ether2 comment="CORE-1"
+add address=10.0.0.21/30 interface=ether3 comment="DIST-1"
+add address=10.0.0.25/30 interface=ether4 comment="DIST-2"
+add address=10.255.255.2/32 interface=loopback comment="loopback"
+
+# Verificacion (vecinos directos):
+#   /ping 10.0.0.5 count=3      (EDGE)
+#   /ping 10.0.0.9 count=3      (CORE-1)
+#   /ping 10.0.0.22 count=3      (DIST-1)
+#   /ping 10.0.0.26 count=3      (DIST-2)
+
+# ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
+# Las claves NO van en este archivo. Despues de importar, desde la consola:
+#   /password                                   (clave de admin, del gestor del grupo)
+#   /user set monitor password=<clave> disabled=no
+
+/user
+add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+
+# gestion solo desde enlaces internos y loopbacks
+/ip service
+set [ find name=telnet ] disabled=yes
+set [ find name=ftp ] disabled=yes
+set [ find name=www ] disabled=yes
+set [ find name=www-ssl ] disabled=yes
+set [ find name=api ] disabled=yes
+set [ find name=api-ssl ] disabled=yes
+set [ find name=reverse-proxy ] disabled=yes
+set [ find name=ssh ] address=10.0.0.0/24,10.255.255.0/24
+set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
+
+/ip ssh set strong-crypto=yes
+
 /ip socks set enabled=no
+/ip upnp set enabled=no
+/ip proxy set enabled=no
+# 7.24: ddns-enabled=no ya no es valido y cloud no esta soportado en CHR free
+/ip cloud set update-time=no
+/ip dns set allow-remote-requests=no
+/tool bandwidth-server set enabled=no
 
-# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
-# ping 10.0.0.5  -> EDGE
-# ping 10.0.0.9  -> CORE-1 (core-core)
-# ping 10.0.0.22 -> DIST-1
-# ping 10.0.0.26 -> DIST-2
+# descubrimiento de vecinos y acceso por MAC solo en enlaces internos
+/ip neighbor discovery-settings set discover-interface-list=LAN
+/tool mac-server set allowed-interface-list=LAN
+/tool mac-server mac-winbox set allowed-interface-list=LAN
 ```
 
 ### 3.6 DIST-1
 
 ```routeros
-# ============================================
-# DIST-1 - Failover Routing Lab (GOYS)
-# F1: direccionamiento IP + loopback + hardening base
-# VRRP (vrid 10/20) y OSPF se configuran en F2 - no incluidos aca.
-# Las IPs de LAN de abajo son la interfaz FISICA de DIST-1; el gateway
-# virtual VRRP (10.10.10.1 / 10.10.20.1) se agrega en F2.
-# ============================================
-# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
-# proyecto GNS3 antes de aplicar. Orden asumido: ether1=CORE-1, ether2=CORE-2,
-# ether3=LAN USERS, ether4=LAN SERVERS.
+# DIST-1 - distribucion (VRRP en F2: master vrid 10, backup vrid 20) - router-id 10.255.255.4
+# Cableado en GNS3:
+#   ether1 -> CORE-1   ether2 -> CORE-2   ether3 -> LAN USERS   ether4 -> LAN SERVERS
+# Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
+# Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
+# los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# OSPF y VRRP se configuran en F2, no van en este archivo.
+
+# ---------- F1: identidad, IPs de enlace y loopback ----------
 
 /system identity set name=DIST-1
 
-# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
-/ip address add address=10.0.0.14/30 interface=ether1 comment="enlace a CORE-1"
-/ip address add address=10.0.0.22/30 interface=ether2 comment="enlace a CORE-2"
-/ip address add address=10.10.10.2/24 interface=ether3 comment="LAN USERS (fisica, master vrid 10 en F2)"
-/ip address add address=10.10.20.2/24 interface=ether4 comment="LAN SERVERS (fisica, backup vrid 20 en F2)"
+# CHR trae un dhcp-client en ether1 por defecto: no va en este diseno
+/ip dhcp-client remove [ find ]
 
-# --- Loopback / Router-ID ---
-/interface bridge add name=loopback0
-/ip address add address=10.255.255.4/32 interface=loopback0
+/interface ethernet
+set [ find default-name=ether1 ] comment="to CORE-1"
+set [ find default-name=ether2 ] comment="to CORE-2"
+set [ find default-name=ether3 ] comment="to LAN USERS (SW-USERS)"
+set [ find default-name=ether4 ] comment="to LAN SERVERS (SW-SERVERS)"
 
-# --- Hardening (ver docs/memoria.md seccion 1.3) ---
-# Las passwords de abajo son placeholders: cambiarlas por las reales del
-# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
-# nunca la password real en este archivo.
-/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
-/user group add name=monitor-ro policy=read,test,winbox,ssh
-/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+/interface bridge
+add name=loopback protocol-mode=none comment="loopback / router-id"
 
-/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
-/ip service set ssh port=22
-/ip cloud set ddns-enabled=no
-/tool bandwidth-server set enabled=no
-/ip upnp set enabled=no
+/interface list
+add name=LAN comment="enlaces internos"
+add name=ACCESS comment="LANs de usuarios y servidores"
+
+/interface list member
+add list=LAN interface=ether1
+add list=LAN interface=ether2
+add list=ACCESS interface=ether3
+add list=ACCESS interface=ether4
+add list=LAN interface=loopback
+
+/ip address
+add address=10.0.0.14/30 interface=ether1 comment="CORE-1"
+add address=10.0.0.22/30 interface=ether2 comment="CORE-2"
+add address=10.10.10.2/24 interface=ether3 comment="LAN USERS (IP fisica; la VIP de VRRP va en F2)"
+add address=10.10.20.2/24 interface=ether4 comment="LAN SERVERS (IP fisica; la VIP de VRRP va en F2)"
+add address=10.255.255.4/32 interface=loopback comment="loopback"
+
+# Verificacion (vecinos directos):
+#   /ping 10.0.0.13 count=3      (CORE-1)
+#   /ping 10.0.0.21 count=3      (CORE-2)
+#   /ping 10.10.10.3 count=3      (DIST-2 por LAN USERS)
+#   /ping 10.10.20.3 count=3      (DIST-2 por LAN SERVERS)
+
+# ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
+# Las claves NO van en este archivo. Despues de importar, desde la consola:
+#   /password                                   (clave de admin, del gestor del grupo)
+#   /user set monitor password=<clave> disabled=no
+
+/user
+add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+
+# gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
+/ip service
+set [ find name=telnet ] disabled=yes
+set [ find name=ftp ] disabled=yes
+set [ find name=www ] disabled=yes
+set [ find name=www-ssl ] disabled=yes
+set [ find name=api ] disabled=yes
+set [ find name=api-ssl ] disabled=yes
+set [ find name=reverse-proxy ] disabled=yes
+set [ find name=ssh ] address=10.0.0.0/24,10.255.255.0/24
+set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
+
+/ip ssh set strong-crypto=yes
+
 /ip socks set enabled=no
+/ip upnp set enabled=no
+/ip proxy set enabled=no
+# 7.24: ddns-enabled=no ya no es valido y cloud no esta soportado en CHR free
+/ip cloud set update-time=no
+/ip dns set allow-remote-requests=no
+/tool bandwidth-server set enabled=no
 
-# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
-# ping 10.0.0.13 -> CORE-1
-# ping 10.0.0.21 -> CORE-2
-# ping 10.10.10.3 -> DIST-2 (misma LAN USERS)
-# ping 10.10.20.3 -> DIST-2 (misma LAN SERVERS)
+# sin descubrimiento de vecinos ni acceso por MAC desde las LANs de usuarios/servidores
+/ip neighbor discovery-settings set discover-interface-list=LAN
+/tool mac-server set allowed-interface-list=LAN
+/tool mac-server mac-winbox set allowed-interface-list=LAN
 ```
 
 ### 3.7 DIST-2
 
 ```routeros
-# ============================================
-# DIST-2 - Failover Routing Lab (GOYS)
-# F1: direccionamiento IP + loopback + hardening base
-# VRRP (vrid 10/20) y OSPF se configuran en F2 - no incluidos aca.
-# Las IPs de LAN de abajo son la interfaz FISICA de DIST-2; el gateway
-# virtual VRRP (10.10.10.1 / 10.10.20.1) se agrega en F2.
-# ============================================
-# IMPORTANTE: ajustar los nombres de interfaz (etherX) al mapeo real de tu
-# proyecto GNS3 antes de aplicar. Orden asumido: ether1=CORE-1, ether2=CORE-2,
-# ether3=LAN USERS, ether4=LAN SERVERS.
+# DIST-2 - distribucion (VRRP en F2: master vrid 20, backup vrid 10) - router-id 10.255.255.5
+# Cableado en GNS3:
+#   ether1 -> CORE-1   ether2 -> CORE-2   ether3 -> LAN USERS   ether4 -> LAN SERVERS
+# Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
+# Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
+# los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# OSPF y VRRP se configuran en F2, no van en este archivo.
+
+# ---------- F1: identidad, IPs de enlace y loopback ----------
 
 /system identity set name=DIST-2
 
-# --- Direccionamiento (IPAM, ver docs/memoria.md seccion 1.2) ---
-/ip address add address=10.0.0.18/30 interface=ether1 comment="enlace a CORE-1"
-/ip address add address=10.0.0.26/30 interface=ether2 comment="enlace a CORE-2"
-/ip address add address=10.10.10.3/24 interface=ether3 comment="LAN USERS (fisica, backup vrid 10 en F2)"
-/ip address add address=10.10.20.3/24 interface=ether4 comment="LAN SERVERS (fisica, master vrid 20 en F2)"
+# CHR trae un dhcp-client en ether1 por defecto: no va en este diseno
+/ip dhcp-client remove [ find ]
 
-# --- Loopback / Router-ID ---
-/interface bridge add name=loopback0
-/ip address add address=10.255.255.5/32 interface=loopback0
+/interface ethernet
+set [ find default-name=ether1 ] comment="to CORE-1"
+set [ find default-name=ether2 ] comment="to CORE-2"
+set [ find default-name=ether3 ] comment="to LAN USERS (SW-USERS)"
+set [ find default-name=ether4 ] comment="to LAN SERVERS (SW-SERVERS)"
 
-# --- Hardening (ver docs/memoria.md seccion 1.3) ---
-# Las passwords de abajo son placeholders: cambiarlas por las reales del
-# gestor de contrasenas del grupo ANTES de aplicar esta config. No commitear
-# nunca la password real en este archivo.
-/user set [find name=admin] password="CAMBIAR-ANTES-DE-APLICAR"
-/user group add name=monitor-ro policy=read,test,winbox,ssh
-/user add name=monitor group=monitor-ro password="CAMBIAR-ANTES-DE-APLICAR"
+/interface bridge
+add name=loopback protocol-mode=none comment="loopback / router-id"
 
-/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
-/ip service set ssh port=22
-/ip cloud set ddns-enabled=no
-/tool bandwidth-server set enabled=no
-/ip upnp set enabled=no
+/interface list
+add name=LAN comment="enlaces internos"
+add name=ACCESS comment="LANs de usuarios y servidores"
+
+/interface list member
+add list=LAN interface=ether1
+add list=LAN interface=ether2
+add list=ACCESS interface=ether3
+add list=ACCESS interface=ether4
+add list=LAN interface=loopback
+
+/ip address
+add address=10.0.0.18/30 interface=ether1 comment="CORE-1"
+add address=10.0.0.26/30 interface=ether2 comment="CORE-2"
+add address=10.10.10.3/24 interface=ether3 comment="LAN USERS (IP fisica; la VIP de VRRP va en F2)"
+add address=10.10.20.3/24 interface=ether4 comment="LAN SERVERS (IP fisica; la VIP de VRRP va en F2)"
+add address=10.255.255.5/32 interface=loopback comment="loopback"
+
+# Verificacion (vecinos directos):
+#   /ping 10.0.0.17 count=3      (CORE-1)
+#   /ping 10.0.0.25 count=3      (CORE-2)
+#   /ping 10.10.10.2 count=3      (DIST-1 por LAN USERS)
+#   /ping 10.10.20.2 count=3      (DIST-1 por LAN SERVERS)
+
+# ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
+# Las claves NO van en este archivo. Despues de importar, desde la consola:
+#   /password                                   (clave de admin, del gestor del grupo)
+#   /user set monitor password=<clave> disabled=no
+
+/user
+add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+
+# gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
+/ip service
+set [ find name=telnet ] disabled=yes
+set [ find name=ftp ] disabled=yes
+set [ find name=www ] disabled=yes
+set [ find name=www-ssl ] disabled=yes
+set [ find name=api ] disabled=yes
+set [ find name=api-ssl ] disabled=yes
+set [ find name=reverse-proxy ] disabled=yes
+set [ find name=ssh ] address=10.0.0.0/24,10.255.255.0/24
+set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
+
+/ip ssh set strong-crypto=yes
+
 /ip socks set enabled=no
+/ip upnp set enabled=no
+/ip proxy set enabled=no
+# 7.24: ddns-enabled=no ya no es valido y cloud no esta soportado en CHR free
+/ip cloud set update-time=no
+/ip dns set allow-remote-requests=no
+/tool bandwidth-server set enabled=no
 
-# --- Verificacion (hacer en GNS3 una vez aplicado, no simulado aca) ---
-# ping 10.0.0.17 -> CORE-1
-# ping 10.0.0.25 -> CORE-2
-# ping 10.10.10.2 -> DIST-1 (misma LAN USERS)
-# ping 10.10.20.2 -> DIST-1 (misma LAN SERVERS)
+# sin descubrimiento de vecinos ni acceso por MAC desde las LANs de usuarios/servidores
+/ip neighbor discovery-settings set discover-interface-list=LAN
+/tool mac-server set allowed-interface-list=LAN
+/tool mac-server mac-winbox set allowed-interface-list=LAN
 ```
 
 ### 3.8 Hosts (PC-USER / SRV)

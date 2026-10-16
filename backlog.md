@@ -57,7 +57,7 @@
 ### IPs de enlace + loopbacks
 
 - [ ] [R1] Configurar IPs de enlace + loopback de EDGE; verificar ping a ISP-1/ISP-2/CORE-1/CORE-2
-- [~] [R3] [R4] Configurar IPs de enlace + loopback de CORE-1/CORE-2/DIST-1/DIST-2 según IPAM — scripts listos en `configs/core-1.rsc`, `core-2.rsc`, `dist-1.rsc`, `dist-2.rsc`; falta aplicarlos en GNS3 y verificar ping entre vecinos directos
+- [~] [R3] [R4] Configurar IPs de enlace + loopback de CORE-1/CORE-2/DIST-1/DIST-2 según IPAM — scripts listos en `configs/CORE-1.rsc`, `CORE-2.rsc`, `DIST-1.rsc`, `DIST-2.rsc`; falta aplicarlos en GNS3 y verificar ping entre vecinos directos
 
 ### Snapshot BASE
 
@@ -66,7 +66,7 @@
 ### Hardening (los 7 routers)
 
 - [ ] [R1] Password admin + usuario `monitor` + servicios apagados en EDGE
-- [~] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en CORE-1/CORE-2/DIST-1/DIST-2 — definido en `configs/`, passwords son placeholders a reemplazar por las reales antes de aplicar
+- [~] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en CORE-1/CORE-2/DIST-1/DIST-2 — definido en `configs/`; las claves se cargan por consola después de importar (`/password` y `/user set monitor`), no van en el repo
 - [ ] [R5] Verificar que el hardening esté aplicado en los 7 routers
 
 ### Backup inicial (`/export`)
