@@ -217,11 +217,18 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 | Mecanismo | Dónde se aplicó | Verificación (¿cómo probaron que funciona?) |
 | :---- | :---- | :---- |
-| Hardening (usuarios/servicios) | <!-- --> | <!-- --> |
+| Hardening (usuarios/servicios) | EDGE, ISP-1, ISP-2 (F1). CORE/DIST pendiente (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions`. Capturas en `capturas/f1/` |
 | OSPF MD5 | <!-- --> | <!-- --> |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
 | VRRP auth | <!-- --> | <!-- --> |
 | Firewall/ACL (edge) | <!-- --> | <!-- --> |
+
+**Desvíos respecto de la política 1.3 (F1):**
+
+- **ddns / cloud:** en RouterOS 7.24 `ddns-enabled=no` ya no es un valor válido y los servicios cloud no están soportados en CHR con licencia free. Solo se deja `update-time=no`.
+- **Red de gestión:** el IPAM no define una red de gestión para los routers. SSH y Winbox se limitan a los enlaces internos y las loopbacks (`10.0.0.0/24`, `10.255.255.0/24`) en EDGE, y al bloque propio del proveedor (`203.0.113.0/24`) en ISP-1 e ISP-2. Las LANs USERS y SERVERS quedan afuera. En F3 se refuerza con el firewall del EDGE.
+- **reverse-proxy:** servicio nuevo de RouterOS 7.24 que no estaba en la lista de la política; también se apaga.
+- **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
 
 > Prueba de seguridad obligatoria: adyacencia OSPF / sesión BGP debe **fallar** con clave incorrecta. Documentar el resultado.
 
