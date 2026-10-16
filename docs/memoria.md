@@ -94,12 +94,19 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 ## 2. Topología
 
-> Pegar acá la captura del proyecto GNS3 (o el diagrama) con las 5 capas identificadas — **pendiente de F1** (requiere los nodos desplegados). El diagrama de diseño corregido ya está en `docs/diagramas/topologia.md`.
+Proyecto GNS3 `goys-failover-g13` (F1): 11 nodos y 15 enlaces, los 7 routers como VMs de VirtualBox con MikroTik CHR 7.24.5. El diagrama de diseño corregido está en `docs/diagramas/topologia.md`.
 
-```
-[INTERNET] [EDGE] [CORE] [DISTRIBUTION] [ACCESS]
-<!-- insertar diagrama/captura en F1 -->
-```
+![Topología del proyecto GNS3](../capturas/f1/topologia-gns3.png)
+
+| Capa | Nodos | Enlaces |
+| :---- | :---- | :---- |
+| INTERNET | ISP-1 (AS 65001), ISP-2 (AS 65002) | ether1 de cada ISP → EDGE |
+| EDGE | EDGE (AS 65000) | ether1 → ISP-1, ether2 → ISP-2, ether3 → CORE-1, ether4 → CORE-2 |
+| CORE | CORE-1, CORE-2 | ether1 → EDGE, ether2 → core-core, ether3 → DIST-1, ether4 → DIST-2 |
+| DISTRIBUTION | DIST-1, DIST-2 | ether1 → CORE-1, ether2 → CORE-2, ether3 → SW-USERS, ether4 → SW-SERVERS |
+| ACCESS | SW-USERS + PC-USER, SW-SERVERS + SRV | switch → host (VPCS) |
+
+En la captura, las etiquetas de GNS3 `0/0`, `1/0`, `2/0`, `3/0` corresponden a `ether1`, `ether2`, `ether3`, `ether4` de cada router.
 
 ---
 
@@ -177,8 +184,14 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 | Prueba | Comando | Resultado |
 | :---- | :---- | :---- |
-| ping intra-LAN (PC-USER ↔ SRV) | <!-- --> | <!-- --> |
-| traceroute a ISP (loopback) | <!-- --> | <!-- --> |
+| ping EDGE → ISP-1 (vecino directo, F1) | en EDGE: `/ping 192.0.2.1 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/edge-ips-y-pings.png` |
+| ping EDGE → ISP-2 (vecino directo, F1) | en EDGE: `/ping 192.0.2.5 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/edge-ips-y-pings.png` |
+| ping ISP-1 → EDGE (vecino directo, F1) | en ISP-1: `/ping 192.0.2.2 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/isp1-isp2-ips-y-pings.png` |
+| ping ISP-2 → EDGE (vecino directo, F1) | en ISP-2: `/ping 192.0.2.6 count=3` | OK, 3/3, 0% de pérdida — `capturas/f1/isp1-isp2-ips-y-pings.png` |
+| Verificación independiente de R5 (F1) | `/ip address print` + ping al vecino en EDGE, ISP-1 e ISP-2 | OK — `capturas/f1/edge-ips-ping.png`, `isp1-ips-ping.png`, `isp2-ips-ping.png` |
+| ping entre vecinos de CORE/DIST y EDGE ↔ CORE (F1) | ver PR de R3/R4 | pendiente de merge (R3/R4) |
+| ping intra-LAN (PC-USER ↔ SRV) | <!-- F2 --> | pendiente de F2 (VRRP + OSPF) |
+| traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
 
 > Pegar capturas de las tablas: `/routing/route/print`, `/interface/vrrp/print`, `/routing/bgp/session/print`.
 
