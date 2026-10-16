@@ -52,12 +52,13 @@
 ### Despliegue (7 CHR + 2 switches + 2 hosts)
 
 - [ ] [R1] Levantar y cablear EDGE según el diagrama
-- [~] [R3] [R4] Levantar y cablear CORE-1/CORE-2/DIST-1/DIST-2 según el diagrama — direccionamiento y hardening ya preparados en `configs/` (rama `f1/core-distribucion`), falta cablear/aplicar en GNS3
+- [x] [R3] [R4] Levantar y cablear CORE-1/CORE-2/DIST-1/DIST-2 según el diagrama (proyecto GNS3 del grupo, VMs CHR 7.24.5 en VirtualBox)
 
 ### IPs de enlace + loopbacks
 
 - [ ] [R1] Configurar IPs de enlace + loopback de EDGE; verificar ping a ISP-1/ISP-2/CORE-1/CORE-2
-- [~] [R3] [R4] Configurar IPs de enlace + loopback de CORE-1/CORE-2/DIST-1/DIST-2 según IPAM — scripts listos en `configs/CORE-1.rsc`, `CORE-2.rsc`, `DIST-1.rsc`, `DIST-2.rsc`; falta aplicarlos en GNS3 y verificar ping entre vecinos directos
+- [x] [R3] [R4] Configurar IPs de enlace + loopback de CORE-1/CORE-2/DIST-1/DIST-2 según IPAM (`configs/CORE-1.rsc`, `CORE-2.rsc`, `DIST-1.rsc`, `DIST-2.rsc`); ping OK entre core-core, core-dist y dist-dist por ambas LANs (`capturas/f1/*-pings.png`)
+- [ ] [R1] [R3] Ping EDGE ↔ CORE-1 / CORE-2 con los tres routers configurados en la misma topología (falta: cada lado se probó por separado)
 
 ### Snapshot BASE
 
@@ -66,7 +67,7 @@
 ### Hardening (los 7 routers)
 
 - [ ] [R1] Password admin + usuario `monitor` + servicios apagados en EDGE
-- [~] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en CORE-1/CORE-2/DIST-1/DIST-2 — definido en `configs/`; las claves se cargan por consola después de importar (`/password` y `/user set monitor`), no van en el repo
+- [x] [R3] [R4] Password admin + usuario `monitor` + servicios apagados en CORE-1/CORE-2/DIST-1/DIST-2 (`capturas/f1/*-servicios-y-monitor.png`); las claves se cargan por consola, no van en el repo
 - [ ] [R5] Verificar que el hardening esté aplicado en los 7 routers
 
 ### Backup inicial (`/export`)

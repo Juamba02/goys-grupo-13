@@ -553,7 +553,7 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 
 | Mecanismo | Dónde se aplicó | Verificación (¿cómo probaron que funciona?) |
 | :---- | :---- | :---- |
-| Hardening (usuarios/servicios) | EDGE, ISP-1, ISP-2 (F1). CORE/DIST pendiente (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions`. Capturas en `capturas/f1/` |
+| Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; en EDGE/ISP, login como `monitor` e intento de cambiar la identidad → `not enough permissions`; en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
 | OSPF MD5 | <!-- --> | <!-- --> |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
 | VRRP auth | <!-- --> | <!-- --> |
@@ -566,6 +566,7 @@ set [ find name=winbox ] address=10.0.0.0/24,10.255.255.0/24
 - **Usuario `monitor`:** es solo para consultas en modo lectura (SSH, Winbox, consola). SNMP no usa los usuarios de `/user`; se configura aparte en F4 (monitoreo, R5).
 - **reverse-proxy:** servicio nuevo de RouterOS 7.24 que no estaba en la lista de la política; también se apaga.
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
+- **Usuario `monitor` al pegar el script por consola:** RouterOS 7.24 pide la clave en `/user add` y toma como clave la línea siguiente del pegado. En los scripts de CORE/DIST el usuario se crea al final para que no se pierda ninguna línea (en CORE-1 pasó y se corrigió aplicando de nuevo el bloque de `/ip service`).
 
 > Prueba de seguridad obligatoria: adyacencia OSPF / sesión BGP debe **fallar** con clave incorrecta. Documentar el resultado.
 
