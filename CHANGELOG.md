@@ -44,10 +44,48 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Tomas Costa (R5) | `ac3a6d6` | Capturas `show ip` de PC-USER y SRV | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `258c692` | Backlog: hosts hechos; restore probado movido a F4. Memoria 3.8 con la referencia a las capturas | `backlog.md`, `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `511ed47` | Change log: registro de la configuración de los hosts | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
-| 16/10/2026 | Tomas Costa (R5) | `b48e84f` | Merge de `main` en la rama del PR #7 (trae #6) antes de mergear, sin conflictos (review R1/R2) | rama `r5-f1-registro` | `git revert -m 1 b48e84f` |
+| 16/10/2026 | Tomas Costa (R5) | `b48e84f` | Merge de `main` en la rama del PR #7 (trae #6) antes de mergear, sin conflictos (review R1/R2) | rama `r5-f1-registro` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 eb54f13`) |
 | 16/10/2026 | Tomas Costa (R5) | `1574b05` | Fechas en hora local de los commits del 15/10 y rol (R3/R4) en las filas de F0 (review R1/R2) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `48e1b4c` | Memoria 6.2: restore sin IP (pegar el backup en la consola) y encabezado; 3.8 con el contenido de `configs/*.vpc` (review R1/R2) | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `6b9c9b5` | Capturas propias de IPs y ping al vecino en EDGE, ISP-1 e ISP-2 (log de login de EDGE tapado) | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `559b7fe` | Memoria §5: la fila de IPs y ping usa la evidencia propia de R5 (review R1/R2) | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | sin commit (solo lab) | ISP-1 e ISP-2 quedaron en estado *saved* de VirtualBox al apagar la PC y GNS3 no los arrancaba; se descartó el estado guardado (`VBoxManage discardstate`) | lab de R5 (ISP-1, ISP-2) | No aplica: la config de RouterOS está en disco |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `6ac4ffe` | IPs de enlace, loopback y hardening base de CORE-1, CORE-2, DIST-1 y DIST-2 | CORE-1, CORE-2, DIST-1, DIST-2 | Revertir el commit y en el router `/ip address remove` de las direcciones agregadas |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `a4f8ac8` | Memoria: configuración de CORE/DIST (pendiente de verificar en GNS3) | `docs/memoria.md` | Revertir el commit |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `4c04972` | Backlog: avance de R3/R4 en F1 (se saca después en `35587af`) | `backlog.md` | Revertir el commit |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `e0744f6` | Merge de `main` en la rama del PR #8 | rama `f1/core-distribucion` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 2362d2c`) |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `3ad25d4` | Scripts de CORE/DIST con la misma estructura que EDGE/ISP: claves por consola y servicios con `find` para 7.24 (review R1/R2) | CORE-1, CORE-2, DIST-1, DIST-2 (solo script) | Revertir el commit |
+| 15/10/2026 | Juan Bautista Aramberri (R3/R4) | `082152d` | Memoria §3: configs de CORE/DIST actualizadas | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `20ab13a` | Usuario `monitor` al final de los scripts de CORE/DIST (al pegar, RouterOS pedía la clave y se comía la línea siguiente) | CORE-1, CORE-2, DIST-1, DIST-2 (solo script) | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | sin commit (solo router) | En CORE-1 se perdió una línea al pegar el script y se aplicó de nuevo el bloque `/ip service` | CORE-1 | Restaurar el backup `CORE-1_20261016_base.rsc` |
+| 16/10/2026 | Joaquin Mazza (R2) | `50ff3c1` | `ether2`–`ether4` sin uso apagadas en ISP-1 e ISP-2 (recomendación de R5) | ISP-1, ISP-2 | `/interface ethernet enable ether2,ether3,ether4` |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `5916e9f` | Capturas de IPs, servicios, monitor y pings de CORE/DIST | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `314143e` | Backlog: F1 de R3/R4 en hecho (se saca después en `35587af`); memoria §5 con la seguridad de CORE/DIST | `backlog.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `9a35806` | Captura de ping de EDGE a CORE-1 y CORE-2 con la topología completa | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Joaquin Mazza (R2) | `13f1c41` | Capturas de `ether2`–`ether4` deshabilitadas en ISP-1 e ISP-2 (review R5) | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `8be9a7c` | Merge del PR #9 con merge commit, tras la review de R5 | `main` | `git revert -m 1 8be9a7c` |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `fbe5bca` | Memoria §2 (topología en GNS3) y §4.1 (pruebas de conectividad de EDGE e ISP) | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `6a69d78` | Memoria §3.1–3.3: configuración de ISP-1, ISP-2 y EDGE | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `35587af` | Se saca `backlog.md` del PR #8 porque lo lleva R5 (review R5) | `backlog.md` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `96f005d` | Memoria §3: referencia a `configs/` y resumen por router; nota inicial actualizada (review R1/R2) | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `b182efc` | `.gitignore`: se ignora `CLAUDE.md` (contexto local) | `.gitignore` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `2362d2c` | Merge del PR #8 con merge commit, tras las reviews de R1/R2 y R5 | `main` | `git revert -m 1 2362d2c` |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `22c271d` | Merge de `main` en la rama del PR #10 | rama `f1-memoria-edge-isp` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 0f94199`) |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `45e7813` | `available-from=` en lugar de `address=` (deprecado en 7.24) en `ssh`/`winbox` de los 7 scripts (review R5) | Los 7 routers (solo script) | Revertir el commit |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `832ea9f` | Merge del PR #11 con merge commit | `main` | `git revert -m 1 832ea9f` |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | `c42a112` | Memoria §3.1–3.3 con el mismo formato que CORE/DIST, lista `CUSTOMER` y `ether2`–`ether4` (review R3/R4) | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `0f94199` | Merge del PR #10 con merge commit | `main` | `git revert -m 1 0f94199` |
+| 16/10/2026 | Tomas Costa (R5) | sin commit (solo lab) | `lab-CORE-1` quedó en estado *aborted* de VirtualBox y GNS3 no lo arrancaba; se arrancó y apagó con `VBoxManage` para dejarlo en `poweroff` | lab de R5 (CORE-1) | No aplica |
+| 16/10/2026 | Tomas Costa (R5) | sin commit (solo lab) | CORE-1, CORE-2, DIST-1 y DIST-2 cargados en el lab de R5 pegando `configs/<ROUTER>.rsc` por consola, y reiniciados para la verificación | lab de R5 (CORE/DIST) | `/system reset-configuration no-defaults=yes` |
+| 16/10/2026 | Tomas Costa (R5) | `3f8bd42` | Backups BASE de CORE-1/2 y DIST-1/2 (tomados por R3/R4) y `_puertos` de ISP-1/ISP-2 (tomados por R2) | `backups/` | No aplica (solo respaldo) |
+| 16/10/2026 | Tomas Costa (R5) | `e73d3ff` | Memoria §6.2: registro de los 6 backups nuevos y la hora de cada encabezado | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `38a281c` | Capturas de la verificación de R5 en CORE/DIST y topología con los 11 nodos encendidos | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `1a53199` | Memoria: verificación de hardening de los 7 routers (§5), topología completa (§2), pings de R5 (§4.1) y checklist (§10) | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `1a48996` | Backlog: F1 completo | `backlog.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `983dcfb` | Change log: registro de los PR #8 a #11 y del cierre de F1 de R5 | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `5133e61` | Capturas de los servicios de DIST-1 justo después de reiniciar y pasados 12 minutos | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `ead42d8` | Memoria §5: `dhcpclient` dinámico transitorio en DIST-1 después del reinicio | `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `fd744f6` | Change log: registro de las capturas de DIST-1 y la corrección de la §5 | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `363f22a` | Rollback de los merges de sincronización (`b48e84f`, `e0744f6`, `22c271d`): se revierten junto con el merge de su PR (review R1/R2) | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `186e10e` | Backlog: F0 con repo remoto, commits iniciales, aprobación del docente y claves en el gestor, confirmados por R1 (review R1/R2) | `backlog.md` | Revertir el commit |
 

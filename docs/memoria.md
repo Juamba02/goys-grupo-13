@@ -96,7 +96,9 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 Proyecto GNS3 `goys-failover-g13` (F1): 11 nodos y 15 enlaces, los 7 routers como VMs de VirtualBox con MikroTik CHR 7.24.5. El diagrama de diseño corregido está en `docs/diagramas/topologia.md`.
 
-![Topología del proyecto GNS3](../capturas/f1/topologia-gns3.png)
+![Topología del proyecto GNS3](../capturas/f1/topologia-gns3-completa.png)
+
+Captura del 16/10/2026 en el lab de R5, con los 11 nodos encendidos y los 15 enlaces arriba. La primera captura (`topologia-gns3.png`, 15/10) es de cuando CORE/DIST todavía no estaban levantados.
 
 | Capa | Nodos | Enlaces |
 | :---- | :---- | :---- |
@@ -205,6 +207,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | Verificación independiente de R5 (F1) | `/ip address print` + ping al vecino en EDGE, ISP-1 e ISP-2 | OK — `capturas/f1/edge-ips-ping.png`, `isp1-ips-ping.png`, `isp2-ips-ping.png` |
 | ping EDGE → CORE-1 / CORE-2 (vecinos directos, F1) | en EDGE: `/ping 10.0.0.2` y `/ping 10.0.0.6` | OK — `capturas/f1/edge-core-pings.png` (R3/R4) |
 | ping entre vecinos de CORE y DIST (core-core, core-dist y dist-dist por las dos LANs, F1) | `/ping` a cada vecino directo desde CORE-1, CORE-2, DIST-1 y DIST-2 | OK — `capturas/f1/core1-pings.png`, `core2-pings.png`, `dist1-pings.png`, `dist2-pings.png` (R3/R4) |
+| Verificación independiente de R5 (F1) | `/ip address print` + ping a cada vecino directo en CORE-1, CORE-2, DIST-1 y DIST-2 (los DIST también entre sí por las dos LAN) | OK, 3/3 en todos — `capturas/f1/core1-ips-ping.png`, `core2-ips-ping.png`, `dist1-ips-ping.png`, `dist2-ips-ping.png` |
 | ping intra-LAN (PC-USER ↔ SRV) | <!-- F2 --> | pendiente de F2 (VRRP + OSPF) |
 | traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
 
@@ -261,7 +264,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 | Mecanismo | Dónde se aplicó | Verificación (¿cómo probaron que funciona?) |
 | :---- | :---- | :---- |
-| Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; en EDGE/ISP, login como `monitor` e intento de cambiar la identidad → `not enough permissions`; en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
+| Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions` (en CORE/DIST, prueba de R5); en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
 | OSPF MD5 | <!-- --> | <!-- --> |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
 | VRRP auth | <!-- --> | <!-- --> |
@@ -276,7 +279,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 - **dhcp-client:** CHR trae uno por defecto en ether1 que no forma parte del diseño; se borra.
 - **Usuario `monitor` al pegar el script por consola:** RouterOS 7.24 pide la clave en `/user add` y toma como clave la línea siguiente del pegado. En los scripts de CORE/DIST el usuario se crea al final para que no se pierda ninguna línea (en CORE-1 pasó y se corrigió aplicando de nuevo el bloque de `/ip service`).
 
-**Verificación independiente de R5 (QA) — 16/10/2026:**
+**Verificación independiente de R5 (QA) — 16/10/2026, los 7 routers:**
 
 Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, CHR 7.24.5, MAC conservadas), separada de la evidencia de implementación que tomó R1/R2. Se comparó la salida en vivo de cada router contra su script de `configs/` y contra esta política.
 
@@ -289,13 +292,29 @@ Hecha por Tomas Costa (R5) en su propia copia del lab (OVA del Drive del grupo, 
 | `mac-winbox` (`LAN` en EDGE, `none` en ISP) | ✅ | ✅ | ✅ | `edge-mac-winbox`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver` |
 | IPs según IPAM 1.2 y ping al vecino | ✅ | ✅ | ✅ | `edge-ips-ping`, `isp1-ips-ping`, `isp2-ips-ping` |
 
-Resultado: **EDGE, ISP-1 e ISP-2 cumplen la política 1.3.** CORE-1/2 y DIST-1/2 quedan pendientes hasta que R3/R4 los configuren.
+**CORE-1, CORE-2, DIST-1 y DIST-2** (16/10/2026): en el lab de R5 los cuatro eran CHR limpios. Se cargaron pegando por consola `configs/<ROUTER>.rsc` del repo (con #11 incluido), se reiniciaron y recién ahí se verificaron. Antes, con `/ip neighbor print`, se confirmó que el cableado coincide con el script: CORE-1 ve a EDGE, CORE-2, DIST-1 y DIST-2 por `ether1`–`ether4`; CORE-2 y los DIST ven a sus vecinos en el mismo orden.
+
+| Control | CORE-1 | CORE-2 | DIST-1 | DIST-2 | Evidencia |
+| :---- | :----: | :----: | :----: | :----: | :---- |
+| `admin` con clave (`full`) y `monitor` habilitado (`read`) | ✅ | ✅ | ✅ | ✅ | `core1-monitor-solo-lectura`, `core2-…`, `dist1-…`, `dist2-…` |
+| `monitor` no puede cambiar la config (`not enough permissions`) | ✅ | ✅ | ✅ | ✅ | ídem |
+| Solo `ssh` y `winbox` habilitados, con `available-from=10.0.0.0/24,10.255.255.0/24`; `bandwidth-server` en `no` | ✅ | ✅ | ✅ | ✅ | `core1-servicios`, `core2-servicios`, `dist1-servicios`, `dist2-servicios`, `dist1-servicios-reinicio`, `dist1-servicios-estable` |
+| Descubrimiento de vecinos, `mac-server` y `mac-winbox` en `LAN` (en los DIST, las LAN de usuarios y servidores quedan afuera: lista `ACCESS`) | ✅ | ✅ | ✅ | ✅ | `core1-neighbor-macserver`, `core2-…`, `dist1-…`, `dist2-…` |
+| IPs según IPAM 1.2 y ping a cada vecino directo | ✅ | ✅ | ✅ | ✅ | `core1-ips-ping`, `core2-ips-ping`, `dist1-ips-ping`, `dist2-ips-ping` |
+
+Resultado: **los 7 routers cumplen la política 1.3.**
 
 Observaciones:
 
-- **Recomendación (no es incumplimiento):** en ISP-1 e ISP-2, `ether2`–`ether4` están habilitadas sin uso (sin cableado; se ven en `isp1-neighbor-macserver` / `isp2-neighbor-macserver`). La política no exige apagar puertos sin uso, pero es buena práctica de hardening: `/interface ethernet disable ether2,ether3,ether4`. Decisión de R2.
+- **`ether2`–`ether4` en ISP-1 e ISP-2:** R5 recomendó apagarlas porque estaban habilitadas sin uso. **Aplicada en el #9** (`50ff3c1`, capturas `isp1-interfaces` / `isp2-interfaces`, backup `_puertos` en 6.2).
+- **Servicios dinámicos después de reiniciar (CORE/DIST):** en la captura de implementación de DIST-1 (`dist1-ips-servicios-y-monitor`, tomada justo después de pegar el script) todavía aparecían `dhcp`, `dhcpclient` y `btest` como dinámicos (`D`). Después del reinicio, `btest` y `dhcp` ya no aparecen. En DIST-1, durante los primeros minutos después del arranque, sigue apareciendo `dhcpclient` (68/udp) (`dist1-servicios-reinicio`), aunque no hay ningún `dhcp-client` configurado: `/ip dhcp-client` y `/ipv6 dhcp-client` están vacíos. A los ~5 minutos desaparece y queda solo `discover`, el descubrimiento de vecinos limitado a `LAN`. Eso es lo que muestran también CORE-1, CORE-2 y DIST-2 (`core1-servicios`, `dist1-servicios-estable`). No es un servicio de gestión ni se puede deshabilitar desde `/ip service`; en F3, el filtro de entrada del plano de gestión debe descartar igual el tráfico no esperado.
+- **Al pegar por consola** (lo que pasó en el lab de R5, a tener en cuenta en el restore de 6.2 y en los drills):
+  - Si la última línea copiada no lleva el salto de línea, queda escrita en el prompt sin ejecutarse. Pasó con `mac-winbox`, que quedó en `all` hasta que se corrió a mano. Conviene terminar cada bloque con un `print` de control.
+  - Si en el primer login se aprieta Enter sin cargar la clave nueva, `admin` queda con la marca `E` (*expired*) en `/user print`, o sea con la clave vacía. Se corrige con `/password`.
+  - Si en `/user add` se aprieta Enter con `password:` vacío, `monitor` se crea sin clave. Se borra y se vuelve a crear.
+- **Clave de `monitor` en el lab de R5:** es propia del lab de R5, no la del gestor del grupo. El control verifica que exista, que esté habilitado, que sea `read` y que no pueda escribir, y eso no depende de cuál sea la clave.
 - Las capturas de `monitor` de EDGE e ISP-1 (de #4) muestran el comentario anterior "consultas y SNMP": son previas a la review. En la verificación de R5 los routers ya tienen "solo lectura / consultas", igual que el script.
-- El servicio dinámico `discover` (5678/udp) que aparece en EDGE es el descubrimiento de vecinos de RouterOS; queda limitado a la lista `LAN`. En los ISP no aparece porque el descubrimiento está en `none`.
+- El servicio dinámico `discover` (5678/udp) que aparece en EDGE, CORE y DIST es el descubrimiento de vecinos de RouterOS; queda limitado a la lista `LAN`. En los ISP no aparece porque el descubrimiento está en `none`.
 
 > Prueba de seguridad obligatoria: adyacencia OSPF / sesión BGP debe **fallar** con clave incorrecta. Documentar el resultado.
 
@@ -327,12 +346,22 @@ Observaciones:
 | 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en EDGE, ISP-1 e ISP-2: capturas, memoria §5 y backlog (`e75babe`, `107f0ce`, `fabf518`) | QA independiente de F1 | Revertir los commits |
 | 16/10/2026 | Tomas Costa (R5) | Hosts PC-USER y SRV configurados en VPCS (solo lab) y evidencia (`ac3a6d6`, `258c692`) | F1: 2 hosts levantados | En VPCS `clear ip`; revertir los commits |
 | 16/10/2026 | Tomas Costa (R5) | Correcciones de la review de R1/R2 al PR #7: merge de `main`, fechas y roles del change log, restore sin IP, hosts en 3.8 y evidencia propia de IPs y ping (`511ed47`, `b48e84f`, `1574b05`, `48e1b4c`, `6b9c9b5`, `559b7fe`) | Review R1/R2 | Revertir los commits |
+| 15–16/10/2026 | Juan Bautista Aramberri (R3/R4) | IPs, loopback y hardening de CORE-1, CORE-2, DIST-1 y DIST-2: scripts, memoria y backlog (`6ac4ffe`, `a4f8ac8`, `4c04972`, `3ad25d4`, `082152d`, `20ab13a`, `314143e`, `35587af`, `96f005d`) | F1: direccionamiento (IPAM 1.2) y política de seguridad 1.3 | Revertir los commits y borrar las direcciones en el router |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | Bloque `/ip service` aplicado de nuevo en CORE-1 (sin commit, solo en el router) | Se perdió una línea al pegar el script | Restaurar el backup BASE |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | Capturas de CORE/DIST y de ping EDGE → CORE (`5916e9f`, `9a35806`) | Evidencia para las secciones 4 y 5 | Revertir los commits |
+| 16/10/2026 | Joaquin Mazza (R2) | `ether2`–`ether4` apagadas en ISP-1 e ISP-2, con capturas (`50ff3c1`, `13f1c41`) | Recomendación de R5 en §5 | `/interface ethernet enable ether2,ether3,ether4` |
+| 16/10/2026 | Joaquin Mazza (R1/R2) | Memoria §2, §3.1–3.3 y §4.1 de EDGE e ISP (`fbe5bca`, `6a69d78`, `c42a112`) | Documentar F1 de R1/R2 | Revertir los commits |
+| 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `available-from=` en `ssh`/`winbox` de los 7 scripts (`45e7813`) y `CLAUDE.md` en `.gitignore` (`b182efc`) | Review R5: `address=` deprecado en 7.24 | Revertir los commits |
+| 16/10/2026 | Grupo | Merges con merge commit: #9 (`8be9a7c`) y #8 (`2362d2c`) por R5, #11 (`832ea9f`) por R1/R2 y #10 (`0f94199`) por R3/R4; merges de `main` en las ramas (`e0744f6`, `22c271d`) | Reviews aprobadas | Merge del PR: `git revert -m 1 <merge>`. Los merges de sincronización no se revierten solos: van junto con el merge de su PR |
+| 16/10/2026 | Tomas Costa (R5) | Backups BASE de CORE/DIST y `_puertos` de ISP-1/ISP-2 (`3f8bd42`) y registro en §6.2 (`e73d3ff`) | Política de backup 1.4: BASE 7/7 y backup post-cambio | No aplica (solo respaldo) |
+| 16/10/2026 | Tomas Costa (R5) | Correcciones de la review de R1/R2 al PR #12: rollback de los merges de sincronización y F0 cerrado en el backlog (`363f22a`, `186e10e`) | Review R1/R2 | Revertir los commits |
+| 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en CORE/DIST (CORE/DIST cargados en el lab de R5, sin commit), capturas, memoria y backlog (`38a281c`, `1a53199`, `1a48996`, `983dcfb`, `5133e61`, `ead42d8`, `fd744f6`) | QA independiente de F1: cierre de F1 | Revertir los commits |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para EDGE, ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backup post-cambio de ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -341,14 +370,25 @@ Observaciones:
 | `EDGE_20261015_base.rsc` | EDGE | Snapshot BASE (F1) | Joaquin Mazza (R1) | IPs de enlace, loopback, listas WAN/LAN, hardening |
 | `ISP-1_20261015_base.rsc` | ISP-1 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
 | `ISP-2_20261015_base.rsc` | ISP-2 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
-| _CORE-1, CORE-2, DIST-1, DIST-2_ | | Snapshot BASE (F1) | _pendiente (R3/R4)_ | |
+| `CORE-1_20261016_base.rsc` | CORE-1 | Snapshot BASE (F1) | Juan Bautista Aramberri (R3) | IPs de enlace, loopback, lista LAN, hardening |
+| `CORE-2_20261016_base.rsc` | CORE-2 | Snapshot BASE (F1) | Juan Bautista Aramberri (R3) | IPs de enlace, loopback, lista LAN, hardening |
+| `DIST-1_20261016_base.rsc` | DIST-1 | Snapshot BASE (F1) | Juan Bautista Aramberri (R4) | IPs de enlace y de las dos LAN, loopback, listas LAN/ACCESS, hardening |
+| `DIST-2_20261016_base.rsc` | DIST-2 | Snapshot BASE (F1) | Juan Bautista Aramberri (R4) | IPs de enlace y de las dos LAN, loopback, listas LAN/ACCESS, hardening |
+| `ISP-1_20261016_puertos.rsc` | ISP-1 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
+| `ISP-2_20261016_puertos.rsc` | ISP-2 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
 
-Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo (`2026-10-16 01:38`) es la hora UTC del router; en hora local corresponde al 15/10 22:38.
+Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo es la hora UTC del router (hora local = UTC − 3):
+
+- EDGE, ISP-1 e ISP-2, BASE: `2026-10-16 01:38` UTC → 15/10 22:38.
+- ISP-1 e ISP-2, `_puertos`: `2026-10-16 03:40` UTC → 16/10 00:40, después del commit `50ff3c1` del #9. Son el "después" del cambio y el BASE es el "antes" (política 1.4).
+- CORE-1, CORE-2, DIST-1 y DIST-2, BASE: `2026-10-16 16:06`–`16:08` UTC → 16/10 13:06–13:08. Ya guardan `available-from=` en `ssh`/`winbox`, que es lo que se cita como prueba en el #11.
+
+R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mismas IPs, servicios, listas y descubrimiento, y ninguno tiene claves.
 
 **Qué NO trae un `/export` (a tener en cuenta en el restore):**
 
 - **Contraseñas:** RouterOS 7 no las exporta, por eso los archivos se pueden versionar.
-- **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los tres archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
+- **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
 - **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
 
 **Restore probado:** pendiente (F4). Procedimiento:
@@ -405,7 +445,7 @@ Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acota
 
 ### Redes
 
-- [ ] 7 CHR + 2 switches + 2 hosts levantados y cableados
+- [x] 7 CHR + 2 switches + 2 hosts levantados y cableados
 - [ ] VRRP operativo (2 grupos, load-sharing)
 - [ ] OSPF área 0 con adyacencias (incluido core–core)
 - [ ] BGP eBGP ×2 establecido (multi-homing)
@@ -413,7 +453,7 @@ Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acota
 
 ### Seguridad
 
-- [ ] Hardening aplicado (password, usuario mínimo, servicios apagados)
+- [x] Hardening aplicado (password, usuario mínimo, servicios apagados)
 - [ ] OSPF MD5 funcionando
 - [ ] BGP TCP-MD5 funcionando
 - [ ] VRRP auth funcionando
