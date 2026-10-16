@@ -249,7 +249,24 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 > Evidencia de backup (`/export` + `/system backup save`) y de **restore probado** — **pendiente de F1/F4**.
 
-<!-- pegar evidencia -->
+**Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
+
+| Archivo | Router | Fase / motivo | Tomado por | Contenido |
+| :---- | :---- | :---- | :---- | :---- |
+| `EDGE_20261015_base.rsc` | EDGE | Snapshot BASE (F1) | Joaquin Mazza (R1) | IPs de enlace, loopback, listas WAN/LAN, hardening |
+| `ISP-1_20261015_base.rsc` | ISP-1 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
+| `ISP-2_20261015_base.rsc` | ISP-2 | Snapshot BASE (F1) | Joaquin Mazza (R2) | IP de enlace, loopback, lista CUSTOMER, hardening |
+| _CORE-1, CORE-2, DIST-1, DIST-2_ | | Snapshot BASE (F1) | _pendiente (R3/R4)_ | |
+
+Los tres BASE ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo (`2026-10-16 01:38`) es la hora UTC del router; en hora local corresponde al 15/10 22:38.
+
+**Qué NO trae un `/export` (a tener en cuenta en el restore):**
+
+- **Contraseñas:** RouterOS 7 no las exporta, por eso los archivos se pueden versionar.
+- **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los tres archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
+- **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
+
+**Restore probado:** pendiente (F4). Procedimiento: CHR limpio (`/system reset-configuration no-defaults=yes`) → `/import file-name=<archivo>.rsc` → recrear usuarios → verificar con `/ip address print`, `/ip service print` y ping al vecino → captura en `capturas/`.
 
 ### 6.3 Monitoreo
 
