@@ -82,4 +82,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 16/10/2026 | Tomas Costa (R5) | `38a281c` | Capturas de la verificación de R5 en CORE/DIST y topología con los 11 nodos encendidos | `capturas/f1/` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `1a53199` | Memoria: verificación de hardening de los 7 routers (§5), topología completa (§2), pings de R5 (§4.1) y checklist (§10) | `docs/memoria.md` | Revertir el commit |
 | 16/10/2026 | Tomas Costa (R5) | `1a48996` | Backlog: F1 completo | `backlog.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `983dcfb` | Change log: registro de los PR #8 a #11 y del cierre de F1 de R5 | `CHANGELOG.md`, `docs/memoria.md` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `5133e61` | Capturas de los servicios de DIST-1 justo después de reiniciar y pasados 12 minutos | `capturas/f1/` | Revertir el commit |
+| 16/10/2026 | Tomas Costa (R5) | `ead42d8` | Memoria §5: `dhcpclient` dinámico transitorio en DIST-1 después del reinicio | `docs/memoria.md` | Revertir el commit |
 

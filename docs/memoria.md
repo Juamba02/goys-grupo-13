@@ -354,7 +354,7 @@ Observaciones:
 | 16/10/2026 | Juan Bautista Aramberri (R3/R4) | `available-from=` en `ssh`/`winbox` de los 7 scripts (`45e7813`) y `CLAUDE.md` en `.gitignore` (`b182efc`) | Review R5: `address=` deprecado en 7.24 | Revertir los commits |
 | 16/10/2026 | Grupo | Merges con merge commit: #9 (`8be9a7c`) y #8 (`2362d2c`) por R5, #11 (`832ea9f`) por R1/R2 y #10 (`0f94199`) por R3/R4; merges de `main` en las ramas (`e0744f6`, `22c271d`) | Reviews aprobadas | `git revert -m 1 <merge>` |
 | 16/10/2026 | Tomas Costa (R5) | Backups BASE de CORE/DIST y `_puertos` de ISP-1/ISP-2 (`3f8bd42`) y registro en §6.2 (`e73d3ff`) | Política de backup 1.4: BASE 7/7 y backup post-cambio | No aplica (solo respaldo) |
-| 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en CORE/DIST (CORE/DIST cargados en el lab de R5, sin commit), capturas, memoria y backlog (`38a281c`, `1a53199`, `1a48996`) | QA independiente de F1: cierre de F1 | Revertir los commits |
+| 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en CORE/DIST (CORE/DIST cargados en el lab de R5, sin commit), capturas, memoria y backlog (`38a281c`, `1a53199`, `1a48996`, `983dcfb`, `5133e61`, `ead42d8`) | QA independiente de F1: cierre de F1 | Revertir los commits |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
