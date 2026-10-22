@@ -139,6 +139,7 @@ Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1:
 - **IPs:** `ether1` 192.0.2.2/30 → ISP-1; `ether2` 192.0.2.6/30 → ISP-2; `ether3` 10.0.0.1/30 → CORE-1; `ether4` 10.0.0.5/30 → CORE-2; `loopback` 10.255.255.3/32 (router-id).
 - **Interfaces:** lista `WAN` (`ether1`, `ether2`, enlaces a los proveedores) y lista `LAN` (`ether3`, `ether4` y loopback), para el firewall de F3.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **OSPF (F2):** instancia `ospf-v2` (router-id 10.255.255.3), área `backbone` 0.0.0.0; `ether3` y `ether4` hacia CORE-1/CORE-2 como `ptp` con MD5 (`auth-id=1`, plantilla `ospf-transito`); loopback pasiva. Hacia los ISP no corre OSPF (eBGP en F3). La clave MD5 se carga por consola al activar la plantilla de tránsito, que el script crea deshabilitada.
 
 ### 3.4 CORE-1
 
@@ -208,6 +209,8 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | ping EDGE → CORE-1 / CORE-2 (vecinos directos, F1) | en EDGE: `/ping 10.0.0.2` y `/ping 10.0.0.6` | OK — `capturas/f1/edge-core-pings.png` (R3/R4) |
 | ping entre vecinos de CORE y DIST (core-core, core-dist y dist-dist por las dos LANs, F1) | `/ping` a cada vecino directo desde CORE-1, CORE-2, DIST-1 y DIST-2 | OK — `capturas/f1/core1-pings.png`, `core2-pings.png`, `dist1-pings.png`, `dist2-pings.png` (R3/R4) |
 | Verificación independiente de R5 (F1) | `/ip address print` + ping a cada vecino directo en CORE-1, CORE-2, DIST-1 y DIST-2 (los DIST también entre sí por las dos LAN) | OK, 3/3 en todos — `capturas/f1/core1-ips-ping.png`, `core2-ips-ping.png`, `dist1-ips-ping.png`, `dist2-ips-ping.png` |
+| Adyacencias OSPF de EDGE con MD5 (F2) | en EDGE: `/routing ospf neighbor print` y `/ip route print where ospf` | OK — CORE-1 (10.255.255.1) y CORE-2 (10.255.255.2) en `Full`; loopbacks y enlaces internos aprendidos por OSPF (distancia 110), con ECMP hacia el core-core — `capturas/f2/edge-ospf-vecinos.png` (R1) |
+| ping entre loopbacks por OSPF (F2) | en EDGE: `/ping 10.255.255.1 src-address=10.255.255.3` y `/ping 10.255.255.2 src-address=10.255.255.3` | OK, 3/3, 0% de pérdida (R1) |
 | ping intra-LAN (PC-USER ↔ SRV) | <!-- F2 --> | pendiente de F2 (VRRP + OSPF) |
 | traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
 
