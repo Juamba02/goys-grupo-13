@@ -90,3 +90,12 @@ add name=to-EDGE instance=bgp-isp2 local.address=192.0.2.5 local.role=ebgp remot
 # Verificacion:
 #   /routing bgp session print       -> to-EDGE en established
 #   /ip route print where bgp        -> 10.10.10.0/24 y 10.10.20.0/24 aprendidas de EDGE
+
+# ---------- F3: plano de gestion del ISP ----------
+# El ISP solo atiende BGP del cliente y ping; la gestion es por consola de GNS3.
+/ip firewall filter
+add chain=input connection-state=established,related,untracked action=accept comment="input: respuestas"
+add chain=input connection-state=invalid action=drop comment="input: invalidos"
+add chain=input protocol=icmp action=accept comment="input: ping y diagnostico"
+add chain=input src-address=192.0.2.6 protocol=tcp dst-port=179 action=accept comment="input: BGP solo desde EDGE"
+add chain=input action=drop comment="input: todo lo demas"
