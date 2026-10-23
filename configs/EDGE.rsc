@@ -103,3 +103,32 @@ add area=backbone interfaces=loopback passive comment="ospf-loopback"
 # Verificacion (con CORE-1 y CORE-2 configurados):
 #   /routing ospf neighbor print     -> 10.255.255.1 y 10.255.255.2 en state=Full
 #   /ip route print where ospf       -> loopbacks y enlaces internos aprendidos por OSPF
+
+# ---------- F3: eBGP multi-homing con ISP-1 e ISP-2 (memoria 1.3: TCP-MD5, una clave distinta por sesion) ----------
+# EDGE (AS 65000) redistribuye OSPF -> BGP pero solo anuncia las dos LANs (sin transito entre ISPs),
+# acepta de los ISP solo la ruta por defecto y sus loopbacks, y mete la default en OSPF.
+# Las claves TCP-MD5 NO van en este archivo: las sesiones se crean deshabilitadas y se activan por consola:
+#   /routing bgp connection set [ find name=to-ISP-1 ] tcp-md5-key=<clave EDGE-ISP-1> disabled=no
+#   /routing bgp connection set [ find name=to-ISP-2 ] tcp-md5-key=<clave EDGE-ISP-2> disabled=no
+
+/routing filter rule
+add chain=bgp-out-isp rule="if (dst == 10.10.10.0/24 || dst == 10.10.20.0/24) { accept }" comment="solo las LANs del grupo"
+add chain=bgp-out-isp rule="reject" comment="nada mas: no somos transito entre ISPs"
+add chain=bgp-in-isp rule="if (dst == 0.0.0.0/0 || dst in 203.0.113.0/24) { accept }" comment="default y loopbacks de los ISP"
+add chain=bgp-in-isp rule="reject"
+
+# en 7.24 el AS y el router-id van en /routing bgp instance; las conexiones apuntan a la instancia
+/routing bgp instance
+add name=bgp-edge as=65000 router-id=10.255.255.3 comment="AS 65000"
+
+/routing bgp connection
+add name=to-ISP-1 instance=bgp-edge local.address=192.0.2.2 local.role=ebgp remote.address=192.0.2.1 remote.as=65001 output.redistribute=ospf output.filter-chain=bgp-out-isp input.filter=bgp-in-isp disabled=yes comment="eBGP con ISP-1"
+add name=to-ISP-2 instance=bgp-edge local.address=192.0.2.6 local.role=ebgp remote.address=192.0.2.5 remote.as=65002 output.redistribute=ospf output.filter-chain=bgp-out-isp input.filter=bgp-in-isp disabled=yes comment="eBGP con ISP-2"
+
+# la ruta por defecto aprendida por BGP se propaga al resto de la red por OSPF
+/routing ospf instance set [ find name=ospf-v2 ] originate-default=if-installed
+
+# Verificacion:
+#   /routing bgp session print       -> to-ISP-1 y to-ISP-2 en established
+#   /ip route print where bgp        -> 0.0.0.0/0, 203.0.113.1/32 y 203.0.113.2/32
+#   en ISP-1/ISP-2: /ip route print where bgp -> solo 10.10.10.0/24 y 10.10.20.0/24
