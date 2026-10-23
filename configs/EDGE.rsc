@@ -79,3 +79,27 @@ set [ find name=winbox ] available-from=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# ---------- F2: OSPF area 0 (memoria 1.3: MD5, una clave por area) ----------
+# Convencion comun para EDGE, CORE-1, CORE-2, DIST-1 y DIST-2:
+#   instancia ospf-v2 (version 2) con router-id = loopback; area backbone (0.0.0.0)
+#   enlaces de transito /30: type=ptp, comment="ospf-transito"; MD5 con auth-id=1
+#   loopback (y en los DIST las LANs de la lista ACCESS): passive
+# La clave MD5 NO va en este archivo y RouterOS 7.24 no acepta auth=md5 sin auth-key, asi que
+# la plantilla de transito se crea deshabilitada y se activa por consola, ya con MD5:
+#   /routing ospf interface-template set [ find comment="ospf-transito" ] auth=md5 auth-id=1 auth-key=<clave del gestor> disabled=no
+# Hacia los ISP (ether1, ether2) no se corre OSPF: ahi va eBGP en F3.
+
+/routing ospf instance
+add name=ospf-v2 version=2 router-id=10.255.255.3 comment="area 0 del grupo"
+
+/routing ospf area
+add name=backbone area-id=0.0.0.0 instance=ospf-v2
+
+/routing ospf interface-template
+add area=backbone interfaces=ether3,ether4 type=ptp disabled=yes comment="ospf-transito"
+add area=backbone interfaces=loopback passive comment="ospf-loopback"
+
+# Verificacion (con CORE-1 y CORE-2 configurados):
+#   /routing ospf neighbor print     -> 10.255.255.1 y 10.255.255.2 en state=Full
+#   /ip route print where ospf       -> loopbacks y enlaces internos aprendidos por OSPF
