@@ -114,7 +114,7 @@ En la captura, las etiquetas de GNS3 `0/0`, `1/0`, `2/0`, `3/0` corresponden a `
 
 ## 3. Configuración
 
-> Un bloque por dispositivo con la config de F1; el script completo está en `configs/<ROUTER>.rsc`. OSPF/VRRP/BGP se agregan en F2/F3.
+> Un bloque por dispositivo con la config de F1 y F2; el script completo está en `configs/<ROUTER>.rsc`. BGP y el firewall se agregan en F3.
 
 ### 3.1 ISP-1
 
@@ -134,7 +134,7 @@ Script completo: [`configs/ISP-2.rsc`](../configs/ISP-2.rsc). Resumen de F1:
 
 ### 3.3 EDGE
 
-Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1:
+Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1 y F2:
 
 - **IPs:** `ether1` 192.0.2.2/30 → ISP-1; `ether2` 192.0.2.6/30 → ISP-2; `ether3` 10.0.0.1/30 → CORE-1; `ether4` 10.0.0.5/30 → CORE-2; `loopback` 10.255.255.3/32 (router-id).
 - **Interfaces:** lista `WAN` (`ether1`, `ether2`, enlaces a los proveedores) y lista `LAN` (`ether3`, `ether4` y loopback), para el firewall de F3.
@@ -143,35 +143,41 @@ Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1:
 
 ### 3.4 CORE-1
 
-Script completo: [`configs/CORE-1.rsc`](../configs/CORE-1.rsc). Resumen de F1:
+Script completo: [`configs/CORE-1.rsc`](../configs/CORE-1.rsc). Resumen de F1 y F2:
 
 - **IPs:** `ether1` 10.0.0.2/30 → EDGE; `ether2` 10.0.0.9/30 → CORE-2 (core-core); `ether3` 10.0.0.13/30 → DIST-1; `ether4` 10.0.0.17/30 → DIST-2; `loopback` 10.255.255.1/32 (router-id).
 - **Interfaces:** lista `LAN` con los 4 enlaces y la loopback.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **OSPF (F2):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether4` (`type=ptp`, MD5 con `auth-id=1`) y loopback pasiva. La clave MD5 se carga por consola.
 
 ### 3.5 CORE-2
 
-Script completo: [`configs/CORE-2.rsc`](../configs/CORE-2.rsc). Resumen de F1:
+Script completo: [`configs/CORE-2.rsc`](../configs/CORE-2.rsc). Resumen de F1 y F2:
 
 - **IPs:** `ether1` 10.0.0.6/30 → EDGE; `ether2` 10.0.0.10/30 → CORE-1 (core-core); `ether3` 10.0.0.21/30 → DIST-1; `ether4` 10.0.0.25/30 → DIST-2; `loopback` 10.255.255.2/32 (router-id).
 - **Interfaces:** lista `LAN` con los 4 enlaces y la loopback.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **OSPF (F2):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether4` (`type=ptp`, MD5 con `auth-id=1`) y loopback pasiva. La clave MD5 se carga por consola.
 
 ### 3.6 DIST-1
 
-Script completo: [`configs/DIST-1.rsc`](../configs/DIST-1.rsc). Resumen de F1:
+Script completo: [`configs/DIST-1.rsc`](../configs/DIST-1.rsc). Resumen de F1 y F2:
 
 - **IPs:** `ether1` 10.0.0.14/30 → CORE-1; `ether2` 10.0.0.22/30 → CORE-2; `ether3` 10.10.10.2/24 → LAN USERS; `ether4` 10.10.20.2/24 → LAN SERVERS; `loopback` 10.255.255.4/32 (router-id).
 - **Interfaces:** lista `LAN` (enlaces a los CORE y loopback) y lista `ACCESS` (LANs USERS y SERVERS). Las IPs de las LANs son las físicas; la VIP de VRRP se agrega en F2.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **OSPF (F2):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether2` (`type=ptp`, MD5 con `auth-id=1`); loopback y LANs (`ether3`, `ether4`) pasivas. La clave MD5 se carga por consola.
+- **VRRP (F2):** `vrrp10` en `ether3` (priority 150, master) y `vrrp20` en `ether4` (priority 100, backup), versión 2 con auth simple, una clave por grupo cargada por consola. VIPs 10.10.10.1/32 y 10.10.20.1/32.
 
 ### 3.7 DIST-2
 
-Script completo: [`configs/DIST-2.rsc`](../configs/DIST-2.rsc). Resumen de F1:
+Script completo: [`configs/DIST-2.rsc`](../configs/DIST-2.rsc). Resumen de F1 y F2:
 
 - **IPs:** `ether1` 10.0.0.18/30 → CORE-1; `ether2` 10.0.0.26/30 → CORE-2; `ether3` 10.10.10.3/24 → LAN USERS; `ether4` 10.10.20.3/24 → LAN SERVERS; `loopback` 10.255.255.5/32 (router-id).
 - **Interfaces:** lista `LAN` (enlaces a los CORE y loopback) y lista `ACCESS` (LANs USERS y SERVERS). Las IPs de las LANs son las físicas; la VIP de VRRP se agrega en F2.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **OSPF (F2):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether2` (`type=ptp`, MD5 con `auth-id=1`); loopback y LANs (`ether3`, `ether4`) pasivas. La clave MD5 se carga por consola.
+- **VRRP (F2):** `vrrp10` en `ether3` (priority 100, backup) y `vrrp20` en `ether4` (priority 150, master), versión 2 con auth simple, una clave por grupo cargada por consola. VIPs 10.10.10.1/32 y 10.10.20.1/32.
 
 ### 3.8 Hosts (PC-USER / SRV)
 
@@ -211,7 +217,11 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | Verificación independiente de R5 (F1) | `/ip address print` + ping a cada vecino directo en CORE-1, CORE-2, DIST-1 y DIST-2 (los DIST también entre sí por las dos LAN) | OK, 3/3 en todos — `capturas/f1/core1-ips-ping.png`, `core2-ips-ping.png`, `dist1-ips-ping.png`, `dist2-ips-ping.png` |
 | Adyacencias OSPF de EDGE con MD5 (F2) | en EDGE: `/routing ospf neighbor print` y `/ip route print where ospf`; en EDGE y CORE-1: `/routing ospf interface-template print` | OK — CORE-1 (10.255.255.1) y CORE-2 (10.255.255.2) en `Full`; loopbacks y enlaces internos aprendidos por OSPF (distancia 110), con ECMP hacia el core-core — `capturas/f2/edge-ospf-vecinos.png`. La plantilla `ospf-transito` tiene `auth=md5 auth-id=1` en las dos puntas del enlace (la clave no se muestra) — `capturas/f2/edge-ospf-md5.png`, `core1-ospf-md5.png` (R1) |
 | ping entre loopbacks por OSPF (F2) | en EDGE: `/ping 10.255.255.1 src-address=10.255.255.3` y `/ping 10.255.255.2 src-address=10.255.255.3` | OK, 3/3, 0% de pérdida en los dos — `capturas/f2/edge-ping-loopbacks.png` (R1) |
-| ping intra-LAN (PC-USER ↔ SRV) | <!-- F2 --> | pendiente de F2 (VRRP + OSPF) |
+| Adyacencias OSPF de CORE y DIST con MD5 (F2) | en CORE-1, CORE-2, DIST-1 y DIST-2: `/routing ospf neighbor print` y `/ip route print where ospf`; en CORE-1: `/routing ospf interface-template print` | OK — core-core y los cuatro enlaces core-dist en `Full`; loopbacks, enlaces internos y las dos LANs aprendidos por OSPF (distancia 110), con ECMP hacia las LANs por los dos DIST. `ospf-transito` con `auth=md5 auth-id=1` (la clave no se muestra) — `capturas/f2/core1-ospf.png`, `core2-ospf.png`, `dist1-ospf-vrrp.png`, `dist2-ospf-vrrp.png`, `ospf-md5.png` (R3/R4) |
+| Adyacencias OSPF con la topología completa (F2) | en CORE-1: `/routing ospf neighbor print`; en EDGE: `/ip route print where ospf` | OK — en un mismo lab, CORE-1 con sus 4 vecinos en `Full`: EDGE (10.255.255.3), CORE-2, DIST-1 y DIST-2. EDGE aprende las loopbacks de los DIST y las dos LANs por ECMP vía los dos CORE — `capturas/f2/core1-ospf-vecinos.png`, `edge-ospf-rutas.png` (R3/R4) |
+| VRRP master/backup (F2) | en DIST-1 y DIST-2: `/interface vrrp print` | OK — DIST-1 master de vrid 10 (priority 150) y backup de vrid 20 (100); DIST-2 al revés: load-sharing de la memoria 1.2 — `capturas/f2/dist1-ospf-vrrp.png`, `dist2-ospf-vrrp.png` (R4) |
+| Gateway virtual desde los hosts (F2) | en PC-USER: `ping 10.10.10.1`; en SRV: `ping 10.10.20.1` | OK, 5/5 en los dos — `capturas/f2/pc-user-ping.png`, `srv-ping.png` (R3/R4) |
+| ping intra-LAN (PC-USER ↔ SRV) (F2) | en PC-USER: `ping 10.10.20.10` y `trace 10.10.20.10` | OK — 3/5: los dos primeros timeouts son la resolución ARP de VPCS; el trace pasa por 10.10.10.2 (DIST-1, master de USERS) y llega a SRV — `capturas/f2/pc-user-ping.png` (R3/R4) |
 | traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
 
 > Pegar capturas de las tablas: `/routing/route/print`, `/interface/vrrp/print`, `/routing/bgp/session/print`.
@@ -268,9 +278,9 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | Mecanismo | Dónde se aplicó | Verificación (¿cómo probaron que funciona?) |
 | :---- | :---- | :---- |
 | Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions` (en CORE/DIST, prueba de R5); en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
-| OSPF MD5 | <!-- --> | <!-- --> |
+| OSPF MD5 | Área 0 en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (F2): plantilla `ospf-transito`, `auth=md5 auth-id=1`, una sola clave para el área | `/routing ospf interface-template print` muestra `auth=md5 auth-id=1` sin la clave, y las adyacencias quedan en `Full` con MD5 en las dos puntas de cada enlace — `capturas/f2/ospf-md5.png`, `edge-ospf-md5.png`, `core1-ospf-md5.png`, `core1-ospf-vecinos.png`. Prueba con clave incorrecta: pendiente (F4) |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
-| VRRP auth | <!-- --> | <!-- --> |
+| VRRP auth | vrid 10 y vrid 20 en DIST-1 y DIST-2 (F2): `version=2`, `authentication=simple`, una clave por grupo, distintas entre sí | `/interface vrrp print proplist=name,vrid,priority,version,authentication` muestra `simple` en los dos grupos sin la clave, y cada grupo queda con un solo master (DIST-1 en vrid 10, DIST-2 en vrid 20) — `capturas/f2/dist1-vrrp-auth.png`, `dist2-vrrp-auth.png`. Prueba con clave incorrecta: pendiente (F4) |
 | Firewall/ACL (edge) | <!-- --> | <!-- --> |
 
 **Desvíos respecto de la política 1.3 (F1):**
