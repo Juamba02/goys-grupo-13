@@ -132,3 +132,36 @@ add name=to-ISP-2 instance=bgp-edge local.address=192.0.2.6 local.role=ebgp remo
 #   /routing bgp session print       -> to-ISP-1 y to-ISP-2 en established
 #   /ip route print where bgp        -> 0.0.0.0/0, 203.0.113.1/32 y 203.0.113.2/32
 #   en ISP-1/ISP-2: /ip route print where bgp -> solo 10.10.10.0/24 y 10.10.20.0/24
+
+# ---------- F3: firewall del EDGE (filtro de entrada y plano de gestion) ----------
+# input: solo lo que el router necesita (BGP desde los ISP, OSPF y gestion desde adentro, ping).
+# forward: las LANs salen; desde los ISP solo entran respuestas. Antispoofing en raw.
+# Las reglas de accept de established/related van primero para no cortar las sesiones ya armadas.
+
+/ip firewall address-list
+add list=bgp-peers address=192.0.2.1 comment="ISP-1"
+add list=bgp-peers address=192.0.2.5 comment="ISP-2"
+add list=gestion address=10.0.0.0/24 comment="enlaces internos"
+add list=gestion address=10.255.255.0/24 comment="loopbacks"
+
+/ip firewall raw
+add chain=prerouting in-interface-list=WAN src-address=10.0.0.0/8 action=drop comment="antispoofing: origen interno desde los ISP"
+
+/ip firewall filter
+add chain=input connection-state=established,related,untracked action=accept comment="input: respuestas"
+add chain=input connection-state=invalid action=drop comment="input: invalidos"
+add chain=input protocol=icmp action=accept comment="input: ping y diagnostico"
+add chain=input in-interface-list=WAN src-address-list=bgp-peers protocol=tcp dst-port=179 action=accept comment="input: BGP solo desde los ISP"
+add chain=input in-interface-list=LAN protocol=ospf action=accept comment="input: OSPF desde los CORE"
+add chain=input in-interface-list=LAN src-address-list=gestion protocol=tcp dst-port=22,8291 action=accept comment="input: ssh y winbox solo desde gestion"
+add chain=input in-interface-list=LAN protocol=udp dst-port=5678 action=accept comment="input: descubrimiento de vecinos (solo LAN)"
+add chain=input action=drop comment="input: todo lo demas"
+add chain=forward connection-state=established,related,untracked action=accept comment="forward: respuestas"
+add chain=forward connection-state=invalid action=drop comment="forward: invalidos"
+add chain=forward in-interface-list=LAN action=accept comment="forward: salida de las LANs"
+add chain=forward in-interface-list=WAN action=drop comment="forward: nada nuevo desde los ISP"
+
+# Verificacion:
+#   /ip firewall filter print stats   -> los drop de input y forward suman paquetes, los accept de BGP/OSPF tambien
+#   /routing bgp session print        -> las dos sesiones siguen established
+#   /routing ospf neighbor print      -> CORE-1 y CORE-2 siguen en Full
