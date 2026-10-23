@@ -4,7 +4,7 @@
 # Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
-# OSPF se configura en F2, no van en este archivo.
+# F2 (OSPF) va despues del hardening; el usuario monitor sigue al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -76,6 +76,28 @@ set [ find name=winbox ] available-from=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# ---------- F2: OSPF area 0 (memoria 1.3: MD5, una clave por area) ----------
+# Misma convencion que EDGE (#13): instancia ospf-v2, router-id = loopback, area backbone;
+# enlaces de transito /30 type=ptp con MD5 auth-id=1; loopback passive.
+# Si el router ya tiene F1, pegar solo este bloque.
+# La clave MD5 NO va en este archivo y RouterOS 7.24 no acepta auth=md5 sin auth-key, asi que
+# la plantilla de transito se crea deshabilitada y se activa por consola, ya con MD5:
+#   /routing ospf interface-template set [ find comment="ospf-transito" ] auth=md5 auth-id=1 auth-key=<clave del gestor> disabled=no
+
+/routing ospf instance
+add name=ospf-v2 version=2 router-id=10.255.255.1 comment="area 0 del grupo"
+
+/routing ospf area
+add name=backbone area-id=0.0.0.0 instance=ospf-v2
+
+/routing ospf interface-template
+add area=backbone interfaces=ether1,ether2,ether3,ether4 type=ptp disabled=yes comment="ospf-transito"
+add area=backbone interfaces=loopback passive comment="ospf-loopback"
+
+# Verificacion (con EDGE, el otro CORE y los DIST configurados):
+#   /routing ospf neighbor print     -> 10.255.255.3 (EDGE), .2 (CORE-2), .4 (DIST-1) y .5 (DIST-2) en state=Full
+#   /ip route print where ospf       -> loopbacks, enlaces internos y LANs aprendidos por OSPF
 
 # Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
 # RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
