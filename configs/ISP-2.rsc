@@ -4,6 +4,7 @@
 # Si en el proyecto quedo en otra interfaz, cambiar el nombre antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# Las secciones de F2/F3 van despues del hardening; el usuario monitor va al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -34,10 +35,7 @@ add address=203.0.113.2/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo por consola de GNS3: ni el cliente ni el otro ISP tienen acceso
 /ip service
@@ -99,3 +97,9 @@ add chain=input connection-state=invalid action=drop comment="input: invalidos"
 add chain=input protocol=icmp action=accept comment="input: ping y diagnostico"
 add chain=input src-address=192.0.2.6 protocol=tcp dst-port=179 action=accept comment="input: BGP solo desde EDGE"
 add chain=input action=drop comment="input: todo lo demas"
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"

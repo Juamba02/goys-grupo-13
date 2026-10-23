@@ -4,6 +4,7 @@
 # Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# Las secciones de F2/F3 van despues del hardening; el usuario monitor va al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -48,10 +49,7 @@ add address=10.255.255.3/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo desde enlaces internos y loopbacks, no desde las LANs USERS/SERVERS
 /ip service
@@ -165,3 +163,9 @@ add chain=forward in-interface-list=WAN action=drop comment="forward: nada nuevo
 #   /ip firewall filter print stats   -> los drop de input y forward suman paquetes, los accept de BGP/OSPF tambien
 #   /routing bgp session print        -> las dos sesiones siguen established
 #   /routing ospf neighbor print      -> CORE-1 y CORE-2 siguen en Full
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"
