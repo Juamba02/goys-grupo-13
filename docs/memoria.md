@@ -118,19 +118,21 @@ En la captura, las etiquetas de GNS3 `0/0`, `1/0`, `2/0`, `3/0` corresponden a `
 
 ### 3.1 ISP-1
 
-Script completo: [`configs/ISP-1.rsc`](../configs/ISP-1.rsc). Resumen de F1:
+Script completo: [`configs/ISP-1.rsc`](../configs/ISP-1.rsc). Resumen de F1 y F3:
 
 - **IPs:** `ether1` 192.0.2.1/30 → EDGE; `loopback` 203.0.113.1/32 (router-id).
 - **Interfaces:** lista `CUSTOMER` con `ether1` (enlace al cliente). `ether2`–`ether4` apagadas (sin uso).
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde la loopback propia `203.0.113.1/32` (gestión solo por consola de GNS3); socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; sin descubrimiento de vecinos ni MAC server; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **BGP (F3):** instancia `bgp-isp1` (AS 65001, router-id 203.0.113.1); sesión eBGP `to-EDGE` con 192.0.2.2 (AS 65000) con TCP-MD5; anuncia su loopback (address-list `bgp-anuncios`) y le manda la ruta por defecto al cliente (`default-originate=always`). La clave TCP-MD5 se carga por consola al activar la sesión, que el script crea deshabilitada.
 
 ### 3.2 ISP-2
 
-Script completo: [`configs/ISP-2.rsc`](../configs/ISP-2.rsc). Resumen de F1:
+Script completo: [`configs/ISP-2.rsc`](../configs/ISP-2.rsc). Resumen de F1 y F3:
 
 - **IPs:** `ether1` 192.0.2.5/30 → EDGE; `loopback` 203.0.113.2/32 (router-id).
 - **Interfaces:** lista `CUSTOMER` con `ether1` (enlace al cliente). `ether2`–`ether4` apagadas (sin uso).
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde la loopback propia `203.0.113.2/32` (gestión solo por consola de GNS3); socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; sin descubrimiento de vecinos ni MAC server; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **BGP (F3):** igual que ISP-1 con sus datos: instancia `bgp-isp2` (AS 65002, router-id 203.0.113.2), sesión `to-EDGE` con 192.0.2.6 con TCP-MD5 (clave distinta de la de ISP-1), anuncia 203.0.113.2/32 y la ruta por defecto.
 
 ### 3.3 EDGE
 
@@ -140,6 +142,7 @@ Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1 y F2:
 - **Interfaces:** lista `WAN` (`ether1`, `ether2`, enlaces a los proveedores) y lista `LAN` (`ether3`, `ether4` y loopback), para el firewall de F3.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 - **OSPF (F2):** instancia `ospf-v2` (router-id 10.255.255.3), área `backbone` 0.0.0.0; `ether3` y `ether4` hacia CORE-1/CORE-2 como `ptp` con MD5 (`auth-id=1`, plantilla `ospf-transito`); loopback pasiva. Hacia los ISP no corre OSPF (eBGP en F3). La clave MD5 se carga por consola al activar la plantilla de tránsito, que el script crea deshabilitada.
+- **BGP (F3):** instancia `bgp-edge` (AS 65000, router-id 10.255.255.3); sesiones eBGP `to-ISP-1` (192.0.2.1, AS 65001) y `to-ISP-2` (192.0.2.5, AS 65002) con TCP-MD5, una clave distinta por sesión. Redistribuye OSPF → BGP con el filtro de salida `bgp-out-isp`, que deja pasar solo 10.10.10.0/24 y 10.10.20.0/24 (no hay tránsito entre ISPs); el filtro de entrada `bgp-in-isp` acepta solo la ruta por defecto y las loopbacks de los ISP. La default aprendida por BGP se propaga al resto de la red por OSPF (`originate-default=if-installed`). Las claves se cargan por consola al activar las sesiones, que el script crea deshabilitadas.
 
 ### 3.4 CORE-1
 
@@ -222,7 +225,10 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | VRRP master/backup (F2) | en DIST-1 y DIST-2: `/interface vrrp print` | OK — DIST-1 master de vrid 10 (priority 150) y backup de vrid 20 (100); DIST-2 al revés: load-sharing de la memoria 1.2 — `capturas/f2/dist1-ospf-vrrp.png`, `dist2-ospf-vrrp.png` (R4) |
 | Gateway virtual desde los hosts (F2) | en PC-USER: `ping 10.10.10.1`; en SRV: `ping 10.10.20.1` | OK, 5/5 en los dos — `capturas/f2/pc-user-ping.png`, `srv-ping.png` (R3/R4) |
 | ping intra-LAN (PC-USER ↔ SRV) (F2) | en PC-USER: `ping 10.10.20.10` y `trace 10.10.20.10` | OK — 3/5: los dos primeros timeouts son la resolución ARP de VPCS; el trace pasa por 10.10.10.2 (DIST-1, master de USERS) y llega a SRV — `capturas/f2/pc-user-ping.png` (R3/R4) |
-| traceroute a ISP (loopback) | <!-- F3 --> | pendiente de F3 (BGP) |
+| Sesiones eBGP de EDGE con TCP-MD5 (F3) | en EDGE: `/routing bgp session print` | OK — `to-ISP-1` (AS 65001) y `to-ISP-2` (AS 65002) en `E` (established), cada una con su filtro de entrada `bgp-in-isp` y de salida `bgp-out-isp` — `capturas/f3/edge-bgp-sesiones.png` (R1) |
+| Rutas BGP en EDGE (F3) | en EDGE: `/ip route print where bgp or dst-address in 10.10.0.0/16` | OK — default de los dos ISP (activa la de ISP-1) y sus loopbacks 203.0.113.1/32 y 203.0.113.2/32 por BGP; las LANs 10.10.10.0/24 y 10.10.20.0/24 por OSPF vía los dos CORE — `capturas/f3/edge-bgp-rutas.png` (R1) |
+| Anuncio de las LANs a los ISP (F3) | en ISP-1 e ISP-2: `/ip route print where bgp` | OK — cada ISP aprende de EDGE solo 10.10.10.0/24 y 10.10.20.0/24: ni enlaces internos ni loopbacks (el filtro de salida funciona) — `capturas/f3/isp1-bgp-rutas.png`, `isp2-bgp-rutas.png` (R1/R2) |
+| traceroute a ISP (loopback) | <!-- F3 --> | pendiente: verificación de R5 desde los hosts |
 
 > Pegar capturas de las tablas: `/routing/route/print`, `/interface/vrrp/print`, `/routing/bgp/session/print`.
 
@@ -279,7 +285,7 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | :---- | :---- | :---- |
 | Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions` (en CORE/DIST, prueba de R5); en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
 | OSPF MD5 | Área 0 en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (F2): plantilla `ospf-transito`, `auth=md5 auth-id=1`, una sola clave para el área | `/routing ospf interface-template print` muestra `auth=md5 auth-id=1` sin la clave, y las adyacencias quedan en `Full` con MD5 en las dos puntas de cada enlace — `capturas/f2/ospf-md5.png`, `edge-ospf-md5.png`, `core1-ospf-md5.png`, `core1-ospf-vecinos.png`. Prueba con clave incorrecta: pendiente (F4) |
-| BGP TCP-MD5 | <!-- --> | <!-- --> |
+| BGP TCP-MD5 | Sesiones eBGP EDGE↔ISP-1 y EDGE↔ISP-2 (F3): `tcp-md5-key` en las dos puntas, una clave distinta por sesión | Las dos sesiones quedan `established` solo con la misma clave en las dos puntas: en la primera carga, con las claves de EDGE↔ISP-2 distintas, la sesión no se establecía aunque el enlace respondía al ping, y se estableció al cargar la misma clave. RouterOS no muestra la clave en `print` ni en `/export` — `capturas/f3/edge-bgp-sesiones.png`. Prueba documentada con clave incorrecta: pendiente (F4) |
 | VRRP auth | vrid 10 y vrid 20 en DIST-1 y DIST-2 (F2): `version=2`, `authentication=simple`, una clave por grupo, distintas entre sí | `/interface vrrp print proplist=name,vrid,priority,version,authentication` muestra `simple` en los dos grupos sin la clave, y cada grupo queda con un solo master (DIST-1 en vrid 10, DIST-2 en vrid 20) — `capturas/f2/dist1-vrrp-auth.png`, `dist2-vrrp-auth.png`. Prueba con clave incorrecta: pendiente (F4) |
 | Firewall/ACL (edge) | <!-- --> | <!-- --> |
 
