@@ -71,3 +71,22 @@ set [ find name=winbox ] available-from=203.0.113.1/32
 set [ find default-name=ether2 ] disabled=yes comment="sin uso"
 set [ find default-name=ether3 ] disabled=yes comment="sin uso"
 set [ find default-name=ether4 ] disabled=yes comment="sin uso"
+
+# ---------- F3: eBGP con EDGE (memoria 1.3: TCP-MD5, una clave distinta por sesion) ----------
+# ISP-1 (AS 65001) anuncia su loopback y le manda la ruta por defecto al cliente (EDGE, AS 65000).
+# La clave TCP-MD5 NO va en este archivo: la sesion se crea deshabilitada y se activa por consola:
+#   /routing bgp connection set [ find name=to-EDGE ] tcp-md5-key=<clave de la sesion EDGE-ISP-1> disabled=no
+
+/ip firewall address-list
+add list=bgp-anuncios address=203.0.113.1/32 comment="loopback de ISP-1 anunciada por BGP"
+
+# en 7.24 el AS y el router-id van en /routing bgp instance; la conexion apunta a la instancia
+/routing bgp instance
+add name=bgp-isp1 as=65001 router-id=203.0.113.1 comment="AS 65001"
+
+/routing bgp connection
+add name=to-EDGE instance=bgp-isp1 local.address=192.0.2.1 local.role=ebgp remote.address=192.0.2.2 remote.as=65000 output.network=bgp-anuncios output.default-originate=always disabled=yes comment="eBGP con EDGE (cliente AS 65000)"
+
+# Verificacion:
+#   /routing bgp session print       -> to-EDGE en established
+#   /ip route print where bgp        -> 10.10.10.0/24 y 10.10.20.0/24 aprendidas de EDGE
