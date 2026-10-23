@@ -4,7 +4,7 @@
 # Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
-# OSPF y VRRP se configuran en F2, no van en este archivo.
+# F2 (OSPF y VRRP) va despues del hardening; el usuario monitor sigue al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -77,6 +77,47 @@ set [ find name=winbox ] available-from=10.0.0.0/24,10.255.255.0/24
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN
 /tool mac-server mac-winbox set allowed-interface-list=LAN
+
+# ---------- F2: OSPF area 0 (memoria 1.3: MD5, una clave por area) ----------
+# Misma convencion que EDGE (#13): instancia ospf-v2, router-id = loopback, area backbone;
+# enlaces de transito /30 type=ptp con MD5 auth-id=1; loopback y LANs (ether3 y ether4, lista ACCESS) passive,
+# asi se anuncian las LANs sin armar adyacencias hacia los hosts.
+# Si el router ya tiene F1, pegar solo los bloques de F2.
+# La clave MD5 NO va en este archivo y RouterOS 7.24 no acepta auth=md5 sin auth-key, asi que
+# la plantilla de transito se crea deshabilitada y se activa por consola, ya con MD5:
+#   /routing ospf interface-template set [ find comment="ospf-transito" ] auth=md5 auth-id=1 auth-key=<clave del gestor> disabled=no
+
+/routing ospf instance
+add name=ospf-v2 version=2 router-id=10.255.255.4 comment="area 0 del grupo"
+
+/routing ospf area
+add name=backbone area-id=0.0.0.0 instance=ospf-v2
+
+/routing ospf interface-template
+add area=backbone interfaces=ether1,ether2 type=ptp disabled=yes comment="ospf-transito"
+add area=backbone interfaces=loopback passive comment="ospf-loopback"
+add area=backbone interfaces=ether3,ether4 passive comment="ospf-lans"
+
+# ---------- F2: VRRP (memoria 1.2: load-sharing; 1.3: auth simple, una clave por grupo) ----------
+# vrid 10 en LAN USERS (ether3) y vrid 20 en LAN SERVERS (ether4), VIP .1 en cada LAN.
+# DIST-1: master de vrid 10 (priority 150) y backup de vrid 20 (priority 100).
+# La auth de VRRP solo existe en version=2. Las claves NO van en este archivo (distintas por
+# grupo, maximo 8 caracteres): los grupos se crean deshabilitados y se activan por consola:
+#   /interface vrrp set [ find name=vrrp10 ] authentication=simple password=<clave vrid 10> disabled=no
+#   /interface vrrp set [ find name=vrrp20 ] authentication=simple password=<clave vrid 20> disabled=no
+
+/interface vrrp
+add name=vrrp10 interface=ether3 vrid=10 priority=150 version=2 disabled=yes comment="gateway LAN USERS"
+add name=vrrp20 interface=ether4 vrid=20 priority=100 version=2 disabled=yes comment="gateway LAN SERVERS"
+
+/ip address
+add address=10.10.10.1/32 interface=vrrp10 comment="VIP LAN USERS (vrid 10)"
+add address=10.10.20.1/32 interface=vrrp20 comment="VIP LAN SERVERS (vrid 20)"
+
+# Verificacion (con el otro DIST configurado):
+#   /routing ospf neighbor print     -> 10.255.255.1 y 10.255.255.2 en state=Full
+#   /interface vrrp print            -> vrrp10 master (M), vrrp20 backup
+#   desde PC-USER: ping 10.10.10.1 / desde SRV: ping 10.10.20.1
 
 # Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
 # RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
