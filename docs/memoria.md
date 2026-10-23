@@ -114,7 +114,7 @@ En la captura, las etiquetas de GNS3 `0/0`, `1/0`, `2/0`, `3/0` corresponden a `
 
 ## 3. Configuración
 
-> Un bloque por dispositivo con la config de F1; el script completo está en `configs/<ROUTER>.rsc`. OSPF/VRRP/BGP se agregan en F2/F3.
+> Un bloque por dispositivo con la config de F1 (y de F2 donde ya está aplicada); el script completo está en `configs/<ROUTER>.rsc`. Lo que falta de OSPF/VRRP/BGP se agrega en F2/F3.
 
 ### 3.1 ISP-1
 
@@ -147,6 +147,7 @@ Script completo: [`configs/CORE-1.rsc`](../configs/CORE-1.rsc). Resumen de F1:
 - **IPs:** `ether1` 10.0.0.2/30 → EDGE; `ether2` 10.0.0.9/30 → CORE-2 (core-core); `ether3` 10.0.0.13/30 → DIST-1; `ether4` 10.0.0.17/30 → DIST-2; `loopback` 10.255.255.1/32 (router-id).
 - **Interfaces:** lista `LAN` con los 4 enlaces y la loopback.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **F2 (OSPF):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether4` (`type=ptp`, MD5 con `auth-id=1`) y loopback pasiva. La clave MD5 se carga por consola.
 
 ### 3.5 CORE-2
 
@@ -155,6 +156,7 @@ Script completo: [`configs/CORE-2.rsc`](../configs/CORE-2.rsc). Resumen de F1:
 - **IPs:** `ether1` 10.0.0.6/30 → EDGE; `ether2` 10.0.0.10/30 → CORE-1 (core-core); `ether3` 10.0.0.21/30 → DIST-1; `ether4` 10.0.0.25/30 → DIST-2; `loopback` 10.255.255.2/32 (router-id).
 - **Interfaces:** lista `LAN` con los 4 enlaces y la loopback.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **F2 (OSPF):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether4` (`type=ptp`, MD5 con `auth-id=1`) y loopback pasiva. La clave MD5 se carga por consola.
 
 ### 3.6 DIST-1
 
@@ -163,6 +165,8 @@ Script completo: [`configs/DIST-1.rsc`](../configs/DIST-1.rsc). Resumen de F1:
 - **IPs:** `ether1` 10.0.0.14/30 → CORE-1; `ether2` 10.0.0.22/30 → CORE-2; `ether3` 10.10.10.2/24 → LAN USERS; `ether4` 10.10.20.2/24 → LAN SERVERS; `loopback` 10.255.255.4/32 (router-id).
 - **Interfaces:** lista `LAN` (enlaces a los CORE y loopback) y lista `ACCESS` (LANs USERS y SERVERS). Las IPs de las LANs son las físicas; la VIP de VRRP se agrega en F2.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **F2 (OSPF):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether2` (`type=ptp`, MD5 con `auth-id=1`); loopback y LANs (`ether3`, `ether4`) pasivas. La clave MD5 se carga por consola.
+- **F2 (VRRP):** `vrrp10` en `ether3` (priority 150, master) y `vrrp20` en `ether4` (priority 100, backup), versión 2 con auth simple, una clave por grupo cargada por consola. VIPs 10.10.10.1/32 y 10.10.20.1/32.
 
 ### 3.7 DIST-2
 
@@ -171,6 +175,8 @@ Script completo: [`configs/DIST-2.rsc`](../configs/DIST-2.rsc). Resumen de F1:
 - **IPs:** `ether1` 10.0.0.18/30 → CORE-1; `ether2` 10.0.0.26/30 → CORE-2; `ether3` 10.10.10.3/24 → LAN USERS; `ether4` 10.10.20.3/24 → LAN SERVERS; `loopback` 10.255.255.5/32 (router-id).
 - **Interfaces:** lista `LAN` (enlaces a los CORE y loopback) y lista `ACCESS` (LANs USERS y SERVERS). Las IPs de las LANs son las físicas; la VIP de VRRP se agrega en F2.
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde `10.0.0.0/24` y `10.255.255.0/24`; socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; descubrimiento de vecinos y MAC server solo en `LAN`; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
+- **F2 (OSPF):** instancia `ospf-v2`, router-id = loopback, área `backbone` 0.0.0.0. Plantilla `ospf-transito` en `ether1`–`ether2` (`type=ptp`, MD5 con `auth-id=1`); loopback y LANs (`ether3`, `ether4`) pasivas. La clave MD5 se carga por consola.
+- **F2 (VRRP):** `vrrp10` en `ether3` (priority 100, backup) y `vrrp20` en `ether4` (priority 150, master), versión 2 con auth simple, una clave por grupo cargada por consola. VIPs 10.10.10.1/32 y 10.10.20.1/32.
 
 ### 3.8 Hosts (PC-USER / SRV)
 
