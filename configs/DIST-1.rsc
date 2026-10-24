@@ -4,7 +4,7 @@
 # Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
-# F2 (OSPF y VRRP) va despues del hardening; el usuario monitor sigue al final.
+# F2 (OSPF y VRRP) y F3 (plano de gestion) van despues del hardening; el usuario monitor sigue al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -118,6 +118,34 @@ add address=10.10.20.1/32 interface=vrrp20 comment="VIP LAN SERVERS (vrid 20)"
 #   /routing ospf neighbor print     -> 10.255.255.1 y 10.255.255.2 en state=Full
 #   /interface vrrp print            -> vrrp10 master (M), vrrp20 backup
 #   desde PC-USER: ping 10.10.10.1 / desde SRV: ping 10.10.20.1
+
+# ---------- F3: plano de gestion (firewall de input) ----------
+# Misma convencion que EDGE (f3-bgp-edge-isp): el router solo atiende lo que necesita.
+# input: OSPF y gestion (ssh/winbox) solo por los enlaces a los CORE (lista LAN); VRRP solo por
+# las LANs (lista ACCESS); ping desde cualquier lado (los hosts prueban su gateway). Desde las LANs
+# no se llega a ssh/winbox ni a ningun otro servicio del router.
+# VRRP tiene que estar aceptado: si se descartan los anuncios del otro DIST, los dos quedan master.
+# La sesion de consola de GNS3 no pasa por el firewall: se puede aplicar sin perder acceso.
+
+/ip firewall address-list
+add list=gestion address=10.0.0.0/24 comment="enlaces internos"
+add list=gestion address=10.255.255.0/24 comment="loopbacks"
+
+/ip firewall filter
+add chain=input connection-state=established,related,untracked action=accept comment="input: respuestas"
+add chain=input connection-state=invalid action=drop comment="input: invalidos"
+add chain=input protocol=icmp action=accept comment="input: ping y diagnostico"
+add chain=input in-interface-list=LAN protocol=ospf action=accept comment="input: OSPF desde los CORE"
+add chain=input in-interface-list=ACCESS protocol=vrrp action=accept comment="input: VRRP del otro DIST (LANs)"
+add chain=input in-interface-list=LAN src-address-list=gestion protocol=tcp dst-port=22,8291 action=accept comment="input: ssh y winbox solo desde gestion"
+add chain=input in-interface-list=LAN protocol=udp dst-port=5678 action=accept comment="input: descubrimiento de vecinos (solo LAN)"
+add chain=input action=drop comment="input: todo lo demas"
+
+# Verificacion:
+#   /ip firewall filter print stats   -> los accept de OSPF y VRRP suman paquetes; el drop final, lo no esperado
+#   /routing ospf neighbor print      -> CORE-1 y CORE-2 siguen en Full
+#   /interface vrrp print             -> vrrp10 master, vrrp20 backup (un solo master por grupo)
+#   desde PC-USER: ping 10.10.10.1 responde; ping 10.10.10.2 -P 6 -p 22 (ssh) no
 
 # Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
 # RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
