@@ -125,6 +125,7 @@ Script completo: [`configs/ISP-1.rsc`](../configs/ISP-1.rsc). Resumen de F1 y F3
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde la loopback propia `203.0.113.1/32` (gestión solo por consola de GNS3); socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; sin descubrimiento de vecinos ni MAC server; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 - **BGP (F3):** instancia `bgp-isp1` (AS 65001, router-id 203.0.113.1); sesión eBGP `to-EDGE` con 192.0.2.2 (AS 65000) con TCP-MD5; anuncia su loopback (address-list `bgp-anuncios`) y le manda la ruta por defecto al cliente (`default-originate=always`). La clave TCP-MD5 se carga por consola al activar la sesión, que el script crea deshabilitada.
 - **Firewall (F3):** input con solo respuestas, ping y BGP desde EDGE; el resto se descarta. Ni el cliente ni el otro proveedor llegan a la gestión.
+- **Drills (F4):** `to-EDGE` con `hold-time=9s keepalive-time=3s` (post-mortem del drill 3) y `198.51.100.1/32` en la loopback como destino "Internet" de prueba, el mismo en los dos ISP (no se anuncia por BGP).
 
 ### 3.2 ISP-2
 
@@ -135,6 +136,7 @@ Script completo: [`configs/ISP-2.rsc`](../configs/ISP-2.rsc). Resumen de F1 y F3
 - **Hardening:** telnet, ftp, www, www-ssl, api, api-ssl y reverse-proxy apagados; ssh y winbox solo desde la loopback propia `203.0.113.2/32` (gestión solo por consola de GNS3); socks, upnp, proxy, cloud, DNS remoto y bandwidth-server apagados; sin descubrimiento de vecinos ni MAC server; usuario `monitor` (grupo `read`). Las claves se cargan por consola.
 - **BGP (F3):** igual que ISP-1 con sus datos: instancia `bgp-isp2` (AS 65002, router-id 203.0.113.2), sesión `to-EDGE` con 192.0.2.6 con TCP-MD5 (clave distinta de la de ISP-1), anuncia 203.0.113.2/32 y la ruta por defecto.
 - **Firewall (F3):** input con solo respuestas, ping y BGP desde EDGE; el resto se descarta. Ni el cliente ni el otro proveedor llegan a la gestión.
+- **Drills (F4):** igual que ISP-1: `to-EDGE` con `hold-time=9s keepalive-time=3s` y `198.51.100.1/32` en la loopback.
 
 ### 3.3 EDGE
 
@@ -146,6 +148,7 @@ Script completo: [`configs/EDGE.rsc`](../configs/EDGE.rsc). Resumen de F1 y F2:
 - **OSPF (F2):** instancia `ospf-v2` (router-id 10.255.255.3), área `backbone` 0.0.0.0; `ether3` y `ether4` hacia CORE-1/CORE-2 como `ptp` con MD5 (`auth-id=1`, plantilla `ospf-transito`); loopback pasiva. Hacia los ISP no corre OSPF (eBGP en F3). La clave MD5 se carga por consola al activar la plantilla de tránsito, que el script crea deshabilitada.
 - **BGP (F3):** instancia `bgp-edge` (AS 65000, router-id 10.255.255.3); sesiones eBGP `to-ISP-1` (192.0.2.1, AS 65001) y `to-ISP-2` (192.0.2.5, AS 65002) con TCP-MD5, una clave distinta por sesión. Redistribuye OSPF → BGP con el filtro de salida `bgp-out-isp`, que deja pasar solo 10.10.10.0/24 y 10.10.20.0/24 (no hay tránsito entre ISPs); el filtro de entrada `bgp-in-isp` acepta solo la ruta por defecto y las loopbacks de los ISP. La default aprendida por BGP se propaga al resto de la red por OSPF (`originate-default=if-installed`). Las claves se cargan por consola al activar las sesiones, que el script crea deshabilitadas.
 - **Firewall (F3):** input: respuestas, ping, BGP solo desde los ISP (address-list `bgp-peers`), OSPF y descubrimiento de vecinos solo por `LAN`, ssh/winbox solo desde la address-list `gestion` (`10.0.0.0/24`, `10.255.255.0/24`); el resto se descarta. Forward: las LANs salen, desde `WAN` solo entran respuestas. Antispoofing en `raw`: se descarta todo lo que llega de `WAN` con origen en `10.0.0.0/8`.
+- **Drills (F4):** `to-ISP-1` y `to-ISP-2` con `hold-time=9s keepalive-time=3s`: con los timers por defecto el cambio de proveedor tardaba 164 s y con estos, 8 s (drill 3, sección 4.2). Las estáticas con `check-gateway` del drill 4 fueron temporales y no quedan en la configuración.
 
 ### 3.4 CORE-1
 
@@ -258,19 +261,25 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 #### Drill 3 — BGP: se cae el proveedor
 
-- **Detección:** <!-- -->
-- **Respuesta:** <!-- -->
-- **Recuperación:** <!-- -->
-- **Tiempo medido:** <!-- -->
-- **Post-mortem:** <!-- -->
+Operó R1/R2 (28/10). Falla simulada: en ISP-1 `/interface disable ether1`, del lado del proveedor, así el enlace del EDGE sigue arriba (como cuando se cae el ISP y no el cable). Medición: desde DIST-1, `/ping 198.51.100.1 src-address=10.10.10.2 interval=1s`; `198.51.100.1` es un destino de prueba que tienen los dos ISP en su loopback, así responde el que esté activo. Antes de la falla la default activa en EDGE es la de ISP-1 (las dos tienen distancia 20 y queda la primera que se aprendió).
+
+- **Detección:** EDGE no ve caer el enlace, solo deja de recibir keepalives de ISP-1. La detecta al vencer el hold-time: `HoldTimer expired to-ISP-1` en `/log print where topics~"bgp"`; la sesión pasa a `Idle` y `/routing bgp session print` muestra solo `to-ISP-2` en `E`.
+- **Respuesta:** automática. EDGE retira la default y las rutas aprendidas de ISP-1 y queda activa la default de ISP-2 (`/ip route print where dst-address=0.0.0.0/0`). Como la default entra a OSPF con `originate-default=if-installed`, el resto de la red no cambia nada: sigue mandando todo al EDGE. Hacia adentro, ISP-2 ya tenía las dos LANs por BGP, así que la vuelta no depende de ISP-1.
+- **Recuperación:** en ISP-1 `/interface enable ether1`. La sesión vuelve a `E` en 8 s y la default de ISP-1 vuelve a quedar disponible.
+- **Tiempo medido:**
+  - Con los timers por defecto (hold-time 3m, keepalive 1m): **164 s** sin salida (pings 14 a 177 perdidos de 260) — `capturas/f4/edge-drill3-holdtimer.png`, `dist1-drill3-ping-1.png`.
+  - Con hold-time 9s y keepalive 3s en las dos puntas: **8 s** (pings 13 a 20 perdidos de 60) — `capturas/f4/edge-drill3-holdtimer-9s.png`, `dist1-drill3-ping-2.png`.
+- **Post-mortem:** el failover funcionó porque las dos sesiones están siempre arriba y EDGE ya tiene la default de ISP-2 cargada, pero con los timers por defecto el corte dura casi lo mismo que el hold-time: cuando falla el proveedor y no el enlace, BGP no tiene otra forma de enterarse. Se bajaron los timers a 9s/3s en las conexiones de EDGE, ISP-1 e ISP-2 (`configs/*.rsc`, bloque F4). El costo es un keepalive cada 3 s por sesión, despreciable, y una sesión más sensible a pérdidas en el enlace (se cae si se pierden 3 keepalives seguidos). Con un enlace real la alternativa sería BFD, que detecta en menos de un segundo.
 
 #### Drill 4 — check-gateway: failover estático de enlace
 
-- **Detección:** <!-- -->
-- **Respuesta:** <!-- -->
-- **Recuperación:** <!-- -->
-- **Tiempo medido:** <!-- -->
-- **Post-mortem:** <!-- -->
+Operó R1 (28/10). Para el drill se agregaron en EDGE dos defaults estáticas temporales con `check-gateway=ping`: `gateway=192.0.2.1 distance=1` (ISP-1) y `gateway=192.0.2.5 distance=2` (ISP-2). Al tener menor distancia que las de BGP (20) son las que se usan, así se mide solo el check-gateway. Misma falla y misma medición que en el drill 3.
+
+- **Detección:** EDGE le hace ping al gateway de cada ruta cada 10 s. Cuando ISP-1 deja de responder, la estática por ISP-1 pasa a `I` (inactiva) en `/ip route print where dst-address=0.0.0.0/0`.
+- **Respuesta:** automática. Queda activa la estática por ISP-2 (`As`, distancia 2).
+- **Recuperación:** en ISP-1 `/interface enable ether1`; la estática por ISP-1 vuelve a quedar activa en 13 s (primer ping del check-gateway que contesta). Al terminar el drill se borraron las dos estáticas (`/ip route remove [ find comment~"drill4" ]`) y quedó la default por BGP como antes.
+- **Tiempo medido:** **29 s** sin salida (pings 12 a 40 perdidos de 60) — `capturas/f4/edge-drill4-check-gateway.png`, `dist1-drill4-ping.png`.
+- **Post-mortem:** el check-gateway sirve cuando no hay protocolo de ruteo con el proveedor, pero acá es más lento que BGP con los timers ajustados (29 s contra 8 s) y además solo prueba que el gateway responde: si ISP-1 contesta el ping pero pierde la sesión BGP (por ejemplo, una clave mal cargada), la estática sigue activa, el tráfico sale por ISP-1 y la vuelta no llega porque ISP-1 ya no conoce las LANs. Por eso en el diseño final no quedan estáticas: el failover de proveedor lo hace BGP, que ve las dos cosas (que el ISP está vivo y qué rutas tiene).
 
 #### Drill 5 — Load-sharing VRRP: ambos DIST activos
 
