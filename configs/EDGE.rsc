@@ -4,7 +4,7 @@
 # Si en el proyecto quedaron en otro orden, cambiar los nombres antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
-# Las secciones de F2/F3 van despues del hardening; el usuario monitor va al final.
+# Las secciones de F2/F3/F4 van despues del hardening; el usuario monitor va al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -163,6 +163,18 @@ add chain=forward in-interface-list=WAN action=drop comment="forward: nada nuevo
 #   /ip firewall filter print stats   -> los drop de input y forward suman paquetes, los accept de BGP/OSPF tambien
 #   /routing bgp session print        -> las dos sesiones siguen established
 #   /routing ospf neighbor print      -> CORE-1 y CORE-2 siguen en Full
+
+# ---------- F4: timers de BGP (post-mortem del drill 3) ----------
+# Con los timers por defecto (hold-time 3m, keepalive 1m) EDGE tardo 164 s en darse cuenta de que
+# ISP-1 no respondia, porque el enlace seguia arriba. Con hold-time 9s el corte medido fue de 8 s.
+# El hold-time se negocia al menor de las dos puntas; igual se pone en las dos (ISP-1/ISP-2 tambien).
+# Cambiar los timers reinicia la sesion: hacerlo con la otra sesion arriba.
+/routing bgp connection
+set [ find name=to-ISP-1 ] hold-time=9s keepalive-time=3s
+set [ find name=to-ISP-2 ] hold-time=9s keepalive-time=3s
+
+# Verificacion:
+#   /routing bgp session print proplist=name,established,hold-time,keepalive-time -> 9s y 3s en las dos
 
 # Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
 # RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
