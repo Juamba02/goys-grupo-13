@@ -133,3 +133,17 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 28/10/2026 | Tomas Costa (R5) | `9848a0f` | Merge del PR #17 con merge commit | `main` | `git revert -m 1 9848a0f` |
 | 28/10/2026 | Tomas Costa (R5) | `dd52628` | Merge del PR #18 con merge commit | `main` | `git revert -m 1 dd52628` |
 | 28/10/2026 | Tomas Costa (R5) | `d443c55` | Backups de ISP-1 e ISP-2 con el rechazo de UDP para el traceroute (tomados por R2 después de `87f26c9`) y registro en §6.2 | `backups/`, `docs/memoria.md` | No aplica (solo respaldo); revertir el commit |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | `e35d475` | Capturas de los drills 1, 2 y 5 y de la prueba de clave incorrecta en OSPF y VRRP | `capturas/f4/` | Revertir el commit |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | `3782ec7` | Memoria §4.2 (drills 1, 2 y 5) y §5 (prueba de clave incorrecta de OSPF y VRRP) | `docs/memoria.md` | Revertir el commit |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | sin commit (solo router) | Drills 1, 2 y 5: interfaces de DIST-1, CORE-1 y DIST-2 apagadas y vueltas a encender | DIST-1, CORE-1, DIST-2 | Ya restauradas (`/interface ethernet enable`) |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | sin commit (solo router) | Prueba de seguridad: clave incorrecta de OSPF (`ospf-transito`) y de VRRP (vrrp10) cargadas por consola en DIST-2 y restauradas con las del gestor | DIST-2 | Ya restauradas: volver a cargar las claves del gestor |
+| 28/10/2026 | Tomas Costa (R5) | `2c76ff7` | Backlog: F3 de EDGE/ISP hecho y drills 3 y 4 tras el merge de los PR #17 y #18 | `backlog.md` | Revertir el commit |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | `2df7642` | Merge de `main` en la rama del PR #20 (resuelve el conflicto de la §5 con el #18) | rama `f4/core-dist-drills` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 899e903`) |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | `9453121` | Capturas del ping de los drills 1, 2 y 5 y de la ruta de DIST-1 con el enlace a CORE-1 cortado (review R5) | `capturas/f4/` | Revertir el commit |
+| 28/10/2026 | Juan Bautista Aramberri (R3/R4) | `78e6bb6` | Memoria §4.2: tiempos de los drills 1, 2 y 5 con las capturas del ping y del trace (review R5) | `docs/memoria.md` | Revertir el commit |
+| 28/10/2026 | Tomas Costa (R5) | `bff8a63` | Merge del PR #19 con merge commit | `main` | `git revert -m 1 bff8a63` |
+| 28/10/2026 | Tomas Costa (R5) | `899e903` | Merge del PR #20 con merge commit | `main` | `git revert -m 1 899e903` |
+| 28/10/2026 | Tomas Costa (R5) | `43a0785` | Backlog: drills y prueba de clave incorrecta hechos tras el PR #20 y mejora de VRRP para F5 | `backlog.md` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | sin commit (solo lab de R5) | F2 a F4 cargados por consola desde `configs/` en los 7 routers del lab de R5, con claves propias del lab | Lab de R5 (no afecta a los demás labs) | Deshabilitar `ospf-transito`, los grupos VRRP y las sesiones BGP |
+| 29/10/2026 | Tomas Costa (R5) | `0a32553` | Verificación de R5 de F2 y F3 en su lab: memoria §4.1 y §5 y 9 capturas | `docs/memoria.md`, `capturas/f2/`, `capturas/f3/` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `8553b9b` | Backlog: verificaciones de R5 de F2 y F3 hechas | `backlog.md` | Revertir el commit |
