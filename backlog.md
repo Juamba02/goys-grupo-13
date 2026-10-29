@@ -128,7 +128,7 @@
 
 ### Monitoreo (SNMP/chequeos)
 
-- [ ] [R5] Habilitar y documentar SNMP/chequeos de monitoreo
+- [x] [R5] Habilitar y documentar SNMP/chequeos de monitoreo — SNMPv3 authPriv en los 5 routers del grupo (bloque F4 de `configs/`), probado en el lab de R5 (memoria §6.3). Queda pendiente la consulta v3 con claves desde un NMS real: el cliente de RouterOS no completa v3
 
 ### Verificación de seguridad (clave incorrecta falla)
 
