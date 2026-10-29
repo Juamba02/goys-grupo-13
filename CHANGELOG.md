@@ -143,3 +143,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 28/10/2026 | Juan Bautista Aramberri (R3/R4) | `78e6bb6` | Memoria §4.2: tiempos de los drills 1, 2 y 5 con las capturas del ping y del trace (review R5) | `docs/memoria.md` | Revertir el commit |
 | 28/10/2026 | Tomas Costa (R5) | `bff8a63` | Merge del PR #19 con merge commit | `main` | `git revert -m 1 bff8a63` |
 | 28/10/2026 | Tomas Costa (R5) | `899e903` | Merge del PR #20 con merge commit | `main` | `git revert -m 1 899e903` |
+| 28/10/2026 | Tomas Costa (R5) | `43a0785` | Backlog: drills y prueba de clave incorrecta hechos tras el PR #20 y mejora de VRRP para F5 | `backlog.md` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | sin commit (solo lab de R5) | F2 a F4 cargados por consola desde `configs/` en los 7 routers del lab de R5, con claves propias del lab | Lab de R5 (no afecta a los demás labs) | Deshabilitar `ospf-transito`, los grupos VRRP y las sesiones BGP |
+| 29/10/2026 | Tomas Costa (R5) | `0a32553` | Verificación de R5 de F2 y F3 en su lab: memoria §4.1 y §5 y 9 capturas | `docs/memoria.md`, `capturas/f2/`, `capturas/f3/` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `8553b9b` | Backlog: verificaciones de R5 de F2 y F3 hechas | `backlog.md` | Revertir el commit |

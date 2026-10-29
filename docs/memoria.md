@@ -416,6 +416,7 @@ Observaciones:
 | 28/10/2026 | Tomas Costa (R5) | Backups post-cambio de F2, F3 y F4 (`62aa60a`, `d443c55`), registro en §6.2 (`97d88dd`) y backlog (`d2b4066`) | Política de backup 1.4 y registro operativo | No aplica (solo respaldo); revertir los commits de documentación |
 | 28/10/2026 | Juan Bautista Aramberri (R3/R4) | Drills 1, 2 y 5 y prueba de clave incorrecta de OSPF y VRRP: memoria y capturas (`e35d475`, `3782ec7`, `9453121`, `78e6bb6`); interfaces apagadas y claves incorrectas en DIST-2, todo restaurado (sin commit); merge de `main` en la rama (`2df7642`) | F4: drills y verificación de seguridad | Revertir los commits; en el router, ya restaurado |
 | 28/10/2026 | Tomas Costa (R5) | Backlog tras el #17 y el #18 (`2c76ff7`) y merges con merge commit: #19 (`bff8a63`) y #20 (`899e903`) | Registro operativo y reviews aprobadas | Revertir el commit; merges: `git revert -m 1 <merge>` |
+| 29/10/2026 | Tomas Costa (R5) | Verificación de R5 de F2 y F3 en su lab (F2 a F4 cargados desde `configs/` con claves propias, sin commit), memoria §4.1 y §5, capturas y backlog (`0a32553`, `8553b9b`, `43a0785`) | QA independiente de F2 y F3 | Revertir los commits; en el lab, deshabilitar OSPF, VRRP y BGP |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
