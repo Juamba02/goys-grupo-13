@@ -380,7 +380,7 @@ Observaciones:
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backup post-cambio de ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backups post-cambio de F1 a F4; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -395,6 +395,21 @@ Observaciones:
 | `DIST-2_20261016_base.rsc` | DIST-2 | Snapshot BASE (F1) | Juan Bautista Aramberri (R4) | IPs de enlace y de las dos LAN, loopback, listas LAN/ACCESS, hardening |
 | `ISP-1_20261016_puertos.rsc` | ISP-1 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
 | `ISP-2_20261016_puertos.rsc` | ISP-2 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
+| `EDGE_20261022_ospf.rsc` | EDGE | Post-cambio (F2, PR #13) | Joaquin Mazza (R1) | El BASE + OSPF: `ospf-v2`, `backbone`, `ospf-transito` en `ether3`/`ether4` con MD5 y loopback pasiva |
+| `CORE-1_20261022_f2.rsc` | CORE-1 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R3) | El BASE + OSPF: `ospf-transito` en `ether1`–`ether4` con MD5 y loopback pasiva |
+| `CORE-2_20261022_f2.rsc` | CORE-2 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R3) | Ídem CORE-1 |
+| `DIST-1_20261022_f2.rsc` | DIST-1 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R4) | El BASE + OSPF (tránsito con MD5, loopback y LANs pasivas) y VRRP: `vrrp10` master (150), `vrrp20` backup, `version=2`, `authentication=simple`, VIPs |
+| `DIST-2_20261022_f2.rsc` | DIST-2 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R4) | Ídem DIST-1 con las prioridades al revés: `vrrp20` master (150), `vrrp10` backup |
+| `EDGE_20261023_f3.rsc` | EDGE | Post-cambio (F3, PR #17) | Joaquin Mazza (R1) | El `_ospf` + BGP (`bgp-edge`, `to-ISP-1`/`to-ISP-2`, filtros `bgp-out-isp`/`bgp-in-isp`, `originate-default=if-installed`) y firewall (input, forward, raw) |
+| `ISP-1_20261023_f3.rsc` | ISP-1 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | El `_puertos` + BGP (`bgp-isp1`, `to-EDGE` con `default-originate`, loopback anunciada) y firewall de input |
+| `ISP-2_20261023_f3.rsc` | ISP-2 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | Ídem ISP-1 con AS 65002 |
+| `CORE-1_20261023_f3.rsc` | CORE-1 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R3) | El `_f2` + firewall de input (address-list `gestion`, OSPF y descubrimiento por `LAN`, drop final) |
+| `CORE-2_20261023_f3.rsc` | CORE-2 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R3) | Ídem CORE-1 |
+| `DIST-1_20261023_f3.rsc` | DIST-1 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R4) | El `_f2` + firewall de input, con VRRP aceptado solo por `ACCESS` |
+| `DIST-2_20261023_f3.rsc` | DIST-2 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R4) | Ídem DIST-1 |
+| `EDGE_20261028_f4.rsc` | EDGE | Post-cambio (F4, PR #18) | Joaquin Mazza (R1) | El `_f3` + `hold-time=9s keepalive-time=3s` en las dos sesiones (post-mortem del drill 3) |
+| `ISP-1_20261028_f4.rsc` | ISP-1 | Post-cambio (F4, PR #18) | Joaquin Mazza (R2) | El `_f3` + `hold-time=9s keepalive-time=3s` y `198.51.100.1/32` en la loopback (destino de prueba de los drills) |
+| `ISP-2_20261028_f4.rsc` | ISP-2 | Post-cambio (F4, PR #18) | Joaquin Mazza (R2) | Ídem ISP-1 |
 
 Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo es la hora UTC del router (hora local = UTC − 3):
 
@@ -403,6 +418,10 @@ Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gest
 - CORE-1, CORE-2, DIST-1 y DIST-2, BASE: `2026-10-16 16:06`–`16:08` UTC → 16/10 13:06–13:08. Ya guardan `available-from=` en `ssh`/`winbox`, que es lo que se cita como prueba en el #11.
 
 R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mismas IPs, servicios, listas y descubrimiento, y ninguno tiene claves.
+
+- F2, F3 y F4: los encabezados también están en UTC (EDGE `_ospf` `2026-10-22 23:32` → 22/10 20:32; CORE/DIST `_f2` `2026-10-23 00:30`–`00:32` → 22/10 21:30–21:32; EDGE/ISP `_f3` `2026-10-23 19:57` → 23/10 16:57; CORE/DIST `_f3` `2026-10-23 21:08`–`21:09` → 23/10 18:08–18:09; EDGE/ISP `_f4` `2026-10-28 21:49` → 28/10 18:49).
+
+R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su fase, y coincide con el script del PR correspondiente (las reglas de firewall de CORE/DIST, regla por regla con `configs/` del #16). Ninguno trae claves: RouterOS no exporta el `auth-key` de OSPF, el `password` de VRRP ni el `tcp-md5-key` de BGP, así que en un restore se vuelven a cargar por consola con los comandos del comentario de cada bloque del script. Para los drills 3 y 4 el backup "antes" es el `_f3`, porque entre F3 y los drills no hubo cambios; las estáticas con `check-gateway` del drill 4 fueron temporales y no quedan en el `_f4`.
 
 **Qué NO trae un `/export` (a tener en cuenta en el restore):**
 
