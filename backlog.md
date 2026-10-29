@@ -124,7 +124,7 @@
 
 ### Restore probado (política de backup 1.4)
 
-- [ ] [R5] Restore probado de al menos un backup sobre un CHR limpio (ver memoria §6.2)
+- [x] [R5] Restore probado de al menos un backup sobre un CHR limpio (ver memoria §6.2) — DIST-2 desde `DIST-2_20261029_snmp.rsc` el 29/10, en el lab de R5; el export restaurado coincide con el backup
 
 ### Monitoreo (SNMP/chequeos)
 
