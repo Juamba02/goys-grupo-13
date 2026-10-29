@@ -237,19 +237,23 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 #### Drill 1 — VRRP: se cae el gateway
 
-- **Detección:** <!-- -->
-- **Respuesta:** <!-- -->
-- **Recuperación:** <!-- -->
-- **Tiempo medido:** <!-- -->
-- **Post-mortem** (¿por qué funcionó? ¿qué aprendieron?): <!-- -->
+Operó R3/R4 (28/10). Falla simulada: en DIST-1, master del vrid 10, `/interface ethernet disable ether3` (el puerto de la LAN USERS). Medición: desde PC-USER, `ping 10.10.20.10 -c 40` (1 por segundo hacia SRV, que sale por el gateway virtual 10.10.10.1); la falla se provoca en el ping 10.
+
+- **Detección:** DIST-2 deja de recibir los anuncios VRRP de DIST-1 en la LAN USERS. Al vencer el *master down interval* (3 × 1 s + skew de 0,61 s con prioridad 100) pasa a master: `vrrp10 now MASTER, master down timer` en `/log print where message~"vrrp10"`.
+- **Respuesta:** automática. DIST-2 toma la IP virtual 10.10.10.1 con la misma MAC virtual (`00:00:5E:00:01:0A`) y manda ARP gratuito, así que PC-USER no cambia nada: sigue usando el mismo gateway. Hacia adentro, DIST-1 deja de anunciar 10.10.10.0/24 por OSPF y la vuelta entra por DIST-2.
+- **Recuperación:** en DIST-1 `/interface ethernet enable ether3`. Con `preemption-mode=yes` y prioridad 150, DIST-1 recupera el master y DIST-2 vuelve a backup (`now BACKUP, got higher priority 150 from 10.10.10.2`), sin pérdida de pings.
+- **Tiempo medido:** **~4 s** sin salida (pings 11 a 14 perdidos de 40); la vuelta, 0 perdidos de 30 — `capturas/f4/dist2-drill1-vrrp.png`.
+- **Post-mortem:** funcionó porque el gateway de los hosts es una IP virtual y no la de un router: el cambio de master es invisible para PC-USER. El tiempo coincide con el teórico de VRRP con `interval=1s` (≈3,6 s). Se podría bajar el intervalo, pero con 4 s el corte ya es menor que el de los protocolos de arriba y un intervalo más corto hace más probable un doble master por pérdida de anuncios. Lo que no cubre VRRP es que el master pierda los uplinks y no la LAN: eso se vio en la prueba de clave incorrecta (sección 5).
 
 #### Drill 2 — OSPF: se corta el camino interno
 
-- **Detección:** <!-- -->
-- **Respuesta:** <!-- -->
-- **Recuperación:** <!-- -->
-- **Tiempo medido:** <!-- -->
-- **Post-mortem:** <!-- -->
+Operó R3/R4 (28/10). Antes de la falla, DIST-1 llega a la loopback de EDGE (10.255.255.3) por ECMP vía CORE-1 y CORE-2, y el `trace` desde PC-USER sale por CORE-1. Falla simulada: en CORE-1 `/interface ethernet disable ether3` (enlace CORE1–DIST1, 10.0.0.12/30). Se corta del lado de CORE-1 a propósito: para DIST-1 el enlace sigue arriba, como cuando se cae el equipo de la otra punta y no el cable. Medición: desde PC-USER, `ping 10.255.255.3 -c 75`; la falla se provoca en el ping 10.
+
+- **Detección:** CORE-1 ve caer su interfaz al instante y genera un LSA nuevo sin el enlace a DIST-1, que llega a DIST-1 por CORE-2. DIST-1 no esperó el *dead interval*: en el SPF el enlace a CORE-1 deja de ser bidireccional y lo descarta. El vecino recién cae por `timeout` unos 35 s después (`/log print where message~"timeout"`).
+- **Respuesta:** automática. En DIST-1, `/ip route print where dst-address=10.255.255.3/32` pasa de dos caminos a uno solo por CORE-2 (10.0.0.21), y el `trace` desde PC-USER cambia el salto 2 de CORE-1 a CORE-2.
+- **Recuperación:** en CORE-1 `/interface ethernet enable ether3`. La adyacencia vuelve a `Full` y DIST-1 recupera los dos caminos, sin pérdida de pings.
+- **Tiempo medido:** **~1 s** sin salida (ping 11 perdido de 75); la vuelta, 0 perdidos de 60 — `capturas/f4/dist1-drill2-ospf.png`.
+- **Post-mortem:** funcionó porque cada DIST tiene dos caminos al core y OSPF ya los tenía calculados. Corrió rápido porque uno de los dos extremos vio caer el enlace. Si ninguno de los dos lo ve (por ejemplo, un switch en el medio que deja de pasar tráfico), la detección depende del *dead interval* de 40 s: con un enlace real convendría BFD o bajar `hello-interval`/`dead-interval` en `ospf-transito`.
 
 #### Drill 3 — BGP: se cae el proveedor
 
@@ -269,10 +273,12 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 #### Drill 5 — Load-sharing VRRP: ambos DIST activos
 
-- **Detección:** <!-- -->
-- **Respuesta:** <!-- -->
-- **Recuperación:** <!-- -->
-- **Post-mortem:** <!-- -->
+Operó R3/R4 (28/10). Estado normal: DIST-1 es master del vrid 10 (USERS, prioridad 150) y DIST-2 del vrid 20 (SERVERS, prioridad 150), así que los dos DIST mueven tráfico. El `trace` lo confirma: desde PC-USER el primer salto es 10.10.10.2 (DIST-1) y desde SRV es 10.10.20.3 (DIST-2). Falla simulada: en DIST-2 `/interface ethernet disable ether3,ether4` (pierde las dos LANs). Medición: desde SRV, `ping 10.10.10.10 -c 30`; la falla se provoca en el ping 8.
+
+- **Detección:** DIST-1 deja de recibir los anuncios del vrid 20 y pasa a master por *master down timer* (`/log print where message~"vrrp20"`).
+- **Respuesta:** automática. DIST-1 queda master de los dos grupos (`/interface vrrp print`: `RM` en vrrp10 y vrrp20) y el `trace` desde SRV pasa a salir por 10.10.20.2.
+- **Recuperación:** en DIST-2 `/interface ethernet enable ether3,ether4`. DIST-2 recupera el vrid 20 por preemption (`vrrp20 now BACKUP, got higher priority 150 from 10.10.20.3` en DIST-1) y el reparto vuelve a quedar como al principio, sin pérdida de pings. Corte medido: 2 pings perdidos de 30 en la caída (pings 9 y 10) y 0 de 30 en la vuelta — `capturas/f4/dist1-drill5-vrrp.png`.
+- **Post-mortem:** el reparto funciona porque cada grupo tiene un master distinto con prioridades cruzadas, y cada DIST es backup del otro: cuando cae uno, el otro absorbe todo y se vuelve al reparto solo con la preemption. El costo es que un DIST tiene que poder con el tráfico de las dos LANs mientras dure la falla. Igual que en el drill 1, las prioridades son fijas: VRRP no se entera si el master pierde los uplinks.
 
 ---
 
@@ -284,9 +290,9 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 | :---- | :---- | :---- |
 | Hardening (usuarios/servicios) | Los 7 routers (F1): EDGE, ISP-1, ISP-2 (R1/R2) y CORE-1, CORE-2, DIST-1, DIST-2 (R3/R4) | `/user print` y `/ip service print` en cada router; login como `monitor` e intento de cambiar la identidad → `not enough permissions` (en CORE/DIST, prueba de R5); en CORE/DIST, además `/tool bandwidth-server print` → `enabled: no`. Capturas en `capturas/f1/` |
 | Plano de gestión (CORE/DIST) | CORE-1, CORE-2, DIST-1 y DIST-2 (F3): firewall de input con address-list `gestion` y listas `LAN`/`ACCESS`, misma convención que EDGE | Desde PC-USER, ssh y winbox al DIST (por la IP de la LAN y por la loopback) no conectan y suma el drop final de `input`; ping al gateway y tráfico entre LANs siguen andando, igual que OSPF y VRRP — `capturas/f3/dist1-firewall.png`, `core1-firewall.png`, `pc-user-gestion-bloqueada.png` |
-| OSPF MD5 | Área 0 en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (F2): plantilla `ospf-transito`, `auth=md5 auth-id=1`, una sola clave para el área | `/routing ospf interface-template print` muestra `auth=md5 auth-id=1` sin la clave, y las adyacencias quedan en `Full` con MD5 en las dos puntas de cada enlace — `capturas/f2/ospf-md5.png`, `edge-ospf-md5.png`, `core1-ospf-md5.png`, `core1-ospf-vecinos.png`. Prueba con clave incorrecta: pendiente (F4) |
+| OSPF MD5 | Área 0 en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (F2): plantilla `ospf-transito`, `auth=md5 auth-id=1`, una sola clave para el área | `/routing ospf interface-template print` muestra `auth=md5 auth-id=1` sin la clave, y las adyacencias quedan en `Full` con MD5 en las dos puntas de cada enlace — `capturas/f2/ospf-md5.png`, `edge-ospf-md5.png`, `core1-ospf-md5.png`, `core1-ospf-vecinos.png`. Prueba con clave incorrecta (F4, R3/R4): en DIST-2 se cargó en `ospf-transito` una clave que no es la del área. Los dos CORE y DIST-2 rechazan los hellos (`authentication failed from ... md5 mismatch` en el log) y, al vencer el *dead interval* (~32 s), las dos adyacencias de DIST-2 caen: su tabla de vecinos queda vacía y CORE-1 queda con 3 vecinos. Al volver a cargar la clave correcta por consola, las adyacencias volvieron a `Full` — `capturas/f4/dist2-clave-incorrecta.png`, `core1-ospf-sin-dist2.png` |
 | BGP TCP-MD5 | <!-- --> | <!-- --> |
-| VRRP auth | vrid 10 y vrid 20 en DIST-1 y DIST-2 (F2): `version=2`, `authentication=simple`, una clave por grupo, distintas entre sí | `/interface vrrp print proplist=name,vrid,priority,version,authentication` muestra `simple` en los dos grupos sin la clave, y cada grupo queda con un solo master (DIST-1 en vrid 10, DIST-2 en vrid 20) — `capturas/f2/dist1-vrrp-auth.png`, `dist2-vrrp-auth.png`. Prueba con clave incorrecta: pendiente (F4) |
+| VRRP auth | vrid 10 y vrid 20 en DIST-1 y DIST-2 (F2): `version=2`, `authentication=simple`, una clave por grupo, distintas entre sí | `/interface vrrp print proplist=name,vrid,priority,version,authentication` muestra `simple` en los dos grupos sin la clave, y cada grupo queda con un solo master (DIST-1 en vrid 10, DIST-2 en vrid 20) — `capturas/f2/dist1-vrrp-auth.png`, `dist2-vrrp-auth.png`. Prueba con clave incorrecta (F4, R3/R4): en DIST-2 se cargó en vrrp10 una clave que no es la del vrid 10. Cada DIST descarta los anuncios del otro (`received packet from ... simple authentication failed`) y los dos quedan master del vrid 10 (`RM` en `/interface vrrp print`). Al volver a cargar la clave correcta, DIST-2 volvió a backup — `capturas/f4/dist1-vrrp-doble-master.png`, `dist2-vrrp-doble-master.png`. Hallazgo: con OSPF también caído, DIST-2 quedó master sin rutas al core y PC-USER y SRV recibían `Destination network unreachable` de DIST-2 al hacer ping a EDGE. VRRP no sigue el estado de OSPF: una clave mal cargada en un solo DIST corta a las dos LANs. Mejora posible: bajar la prioridad del DIST cuando pierde los uplinks (script con netwatch). No se aplicó en F4 |
 | Firewall/ACL (edge) | <!-- --> | <!-- --> |
 
 **Desvíos respecto de la política 1.3 (F1):**
