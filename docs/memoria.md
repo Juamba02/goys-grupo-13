@@ -326,6 +326,7 @@ Operó R3/R4 (28/10). Estado normal: DIST-1 es master del vrid 10 (USERS, priori
 | BGP TCP-MD5 | Sesiones eBGP EDGE↔ISP-1 y EDGE↔ISP-2 (F3): `tcp-md5-key` en las dos puntas, una clave distinta por sesión | Las dos sesiones quedan `established` solo con la misma clave en las dos puntas: en la primera carga, con las claves de EDGE↔ISP-2 distintas, la sesión no se establecía aunque el enlace respondía al ping, y se estableció al cargar la misma clave. RouterOS no muestra la clave en `print` ni en `/export` — `capturas/f3/edge-bgp-sesiones.png`. Prueba con clave incorrecta (F4): en EDGE se cargó en `to-ISP-1` una clave que no es la de ISP-1; la sesión se cerró (`Connection closed` → `Idle` en el log de ISP-1) y no volvió a establecerse, mientras el ping a 192.0.2.1 seguía respondiendo y `to-ISP-2` seguía en `E`. Al volver a cargar la clave correcta por consola, la sesión volvió a `E` y ISP-1 volvió a aprender las dos LANs — `capturas/f4/edge-bgp-clave-incorrecta.png`, `isp1-bgp-clave-incorrecta.png`, `edge-bgp-clave-correcta.png` |
 | VRRP auth | vrid 10 y vrid 20 en DIST-1 y DIST-2 (F2): `version=2`, `authentication=simple`, una clave por grupo, distintas entre sí | `/interface vrrp print proplist=name,vrid,priority,version,authentication` muestra `simple` en los dos grupos sin la clave, y cada grupo queda con un solo master (DIST-1 en vrid 10, DIST-2 en vrid 20) — `capturas/f2/dist1-vrrp-auth.png`, `dist2-vrrp-auth.png`. Prueba con clave incorrecta (F4, R3/R4): en DIST-2 se cargó en vrrp10 una clave que no es la del vrid 10. Cada DIST descarta los anuncios del otro (`received packet from ... simple authentication failed`) y los dos quedan master del vrid 10 (`RM` en `/interface vrrp print`). Al volver a cargar la clave correcta, DIST-2 volvió a backup — `capturas/f4/dist1-vrrp-doble-master.png`, `dist2-vrrp-doble-master.png`. Las dos pruebas (OSPF y VRRP) se hicieron juntas en DIST-2; con OSPF bien, el doble master solo no deja a nadie sin rutas, porque los dos DIST tienen salida al core |
 | Firewall/ACL (edge) | EDGE (F3): filtro de input y forward con listas `WAN`/`LAN`, address-lists `bgp-peers` y `gestion`, antispoofing en `raw`. ISP-1 e ISP-2: input con solo BGP desde EDGE y ping; UDP rechazado con port-unreachable (traceroute) | Desde ISP-1: la LAN no es alcanzable y la gestión del EDGE (puerto 22) no responde; el ping al EDGE sí. Los contadores de `input: todo lo demas` y `forward: nada nuevo desde los ISP` suben con esas pruebas. BGP y OSPF siguen arriba con el firewall puesto. La regla de BGP marca 0 porque las sesiones ya estaban armadas (entran por `input: respuestas`); el SYN de una sesión nueva pasa por ella — `capturas/f3/isp1-firewall-pruebas.png`, `edge-firewall-input.png`, `edge-firewall-forward.png` |
+| SNMPv3 (monitoreo) | EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (F4, R5): community `monitor-v3` `authPriv` (SHA1/AES), solo lectura, solo desde `gestion`; `public` neutralizada; regla `udp/161` antes del drop final | Una consulta v3 sin autenticación es rechazada (`unsupported security level`) y SNMP solo entra por la regla de `gestion`. Detalle y limitación de la prueba positiva en §6.3 — `capturas/f4/edge-snmp-rechazo-v3-r5.png`, `edge-snmp-firewall-r5.png` |
 
 **Desvíos respecto de la política 1.3 (F1):**
 
@@ -494,9 +495,39 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 
 ### 6.3 Monitoreo
 
-> Qué se monitorea (enlaces, vecinos OSPF, sesiones BGP, VRRP) y con qué (SNMP, chequeos) — **pendiente de F4**.
+Configuró y probó R5 en su lab (29/10). Script: bloque "F4: monitoreo por SNMPv3" en `configs/EDGE.rsc`, `CORE-1.rsc`, `CORE-2.rsc`, `DIST-1.rsc` y `DIST-2.rsc`.
 
-<!-- -->
+**Qué se monitorea y con qué:**
+
+| Qué | Con qué | Dónde se mira |
+| :---- | :---- | :---- |
+| Que el router está vivo, su nombre y su uptime | SNMPv3 (`sysName`, `sysUpTime`, MIB-II) | Consulta desde un equipo de la red de gestión |
+| Estado de cada interfaz (arriba/abajo, tráfico) | SNMPv3 (`ifOperStatus`, contadores de `IF-MIB`) | Ídem |
+| Vecinos OSPF en `Full` | Consola: `/routing ospf neighbor print`; log: `timeout` y `authentication failed` | §4.1 y drills 2 y 5 |
+| Sesiones BGP `established` | Consola: `/routing bgp session print`; log: `HoldTimer expired` | §4.1 y drill 3 |
+| Master/backup de VRRP | Consola: `/interface vrrp print`; log: `now MASTER` / `now BACKUP` | §4.1 y drills 1 y 5 |
+
+Para OSPF, BGP y VRRP se usan los `print` y los eventos del log, que son los que ya se usaron en los drills: los MIB estándar que expone RouterOS no cubren el estado de estos protocolos con el detalle de la consola.
+
+**Configuración (los 5 routers del grupo; los ISP no, porque son del proveedor):**
+
+- **SNMPv3 `authPriv`:** community `monitor-v3` con `security=private`, autenticación SHA1 y cifrado AES, solo lectura (`write-access=no`) y solo desde la address-list `gestion` (`10.0.0.0/24` y `10.255.255.0/24`), igual que ssh/winbox. Sin v1/v2c: la community viajaría en texto plano (política 1.3).
+- **`public` neutralizada:** viene por defecto y RouterOS no deja borrarla; se le sacó la lectura y se limitó a `127.0.0.1/32`.
+- **Engine ID único:** `engine-id-suffix` con el nombre de cada router. Los CHR del lab salen de la misma imagen y tenían todos el mismo engine ID (`80003a8c04`); con un engine ID repetido el descubrimiento de SNMPv3 falla. Se encontró al probar y quedó en el script.
+- **Firewall:** regla `input: SNMP solo desde gestion` (`udp/161`, lista `LAN`, address-list `gestion`) antes del drop final del firewall de input de F3.
+- **Claves:** la de autenticación y la de cifrado se cargan por consola; no están en el repo y el `/export` no las muestra (la community se exporta sin claves). En el lab de R5 son propias del lab (§5).
+
+**Verificación (29/10, lab de R5):**
+
+| Prueba | Comando | Resultado |
+| :---- | :---- | :---- |
+| Configuración aplicada | en los 5 routers: `/snmp print` y `/snmp community print detail` | OK — SNMP habilitado, engine ID distinto en cada router, `public` con `read-access=no` y `monitor-v3` con `security=private` SHA1/AES — `capturas/f4/edge-snmp-config-r5.png` |
+| El agente responde a través del firewall | en EDGE, community v2c temporal `prueba-r5` (solo lectura, solo desde `10.0.0.2`, CORE-1); en CORE-1: `/tool snmp-get address=10.255.255.3 version=2c community=prueba-r5 oid=1.3.6.1.2.1.1.5.0` | OK — devuelve `EDGE` (`sysName`). Se borró la community al terminar y la misma consulta pasó a dar `timeout` — `capturas/f4/core1-snmp-v2c-prueba-r5.png` |
+| Sin autenticación no responde | en CORE-1: la misma consulta con `version=3` sin claves | OK — EDGE la rechaza: `bad v3 packet security level: 0` / `unsupported security level` en el log (`/system logging add topics=snmp`, solo durante la prueba) — `capturas/f4/edge-snmp-rechazo-v3-r5.png` |
+| El firewall deja pasar SNMP solo por su regla | en EDGE: `/ip firewall filter print stats where chain=input` | OK — las consultas suman en `input: SNMP solo desde gestion` y el drop final queda en 0 — `capturas/f4/edge-snmp-firewall-r5.png` |
+| Consulta SNMPv3 `authPriv` con las claves | en CORE-1: `/tool snmp-get ... version=3 security=private` con las dos claves | **No se pudo completar con el cliente de RouterOS.** Con el engine ID ya único, EDGE recibe la consulta autenticada pero el cliente no completa el descubrimiento y la sincronización de v3 (`unknown engine id`, después `not in time window or incorrect engine boots`) y termina en `timeout`. El servidor se comporta como debe; la prueba positiva de v3 queda para un NMS real desde la red de gestión (por ejemplo, `snmpget -v3 -l authPriv` de net-snmp) |
+
+La community temporal v2c y el log de SNMP se usaron solo para diagnosticar y se borraron (change log, filas "sin commit").
 
 ---
 
@@ -557,7 +588,7 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 
 - [ ] Change log completo (refleja los commits del repo)
 - [ ] Backups con restore probado
-- [ ] Monitoreo habilitado y documentado
+- [x] Monitoreo habilitado y documentado
 - [ ] Runbook por drill + post-mortem global
 
 ### Entrega
