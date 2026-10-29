@@ -124,11 +124,11 @@
 
 ### Restore probado (política de backup 1.4)
 
-- [ ] [R5] Restore probado de al menos un backup sobre un CHR limpio (ver memoria §6.2)
+- [x] [R5] Restore probado de al menos un backup sobre un CHR limpio (ver memoria §6.2) — DIST-2 desde `DIST-2_20261029_snmp.rsc` el 29/10, en el lab de R5; el export restaurado coincide con el backup
 
 ### Monitoreo (SNMP/chequeos)
 
-- [ ] [R5] Habilitar y documentar SNMP/chequeos de monitoreo
+- [x] [R5] Habilitar y documentar SNMP/chequeos de monitoreo — SNMPv3 authPriv en los 5 routers del grupo (bloque F4 de `configs/`), probado en el lab de R5 (memoria §6.3). Queda pendiente la consulta v3 con claves desde un NMS real: el cliente de RouterOS no completa v3
 
 ### Verificación de seguridad (clave incorrecta falla)
 

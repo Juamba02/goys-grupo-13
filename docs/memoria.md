@@ -326,6 +326,7 @@ Operó R3/R4 (28/10). Estado normal: DIST-1 es master del vrid 10 (USERS, priori
 | BGP TCP-MD5 | Sesiones eBGP EDGE↔ISP-1 y EDGE↔ISP-2 (F3): `tcp-md5-key` en las dos puntas, una clave distinta por sesión | Las dos sesiones quedan `established` solo con la misma clave en las dos puntas: en la primera carga, con las claves de EDGE↔ISP-2 distintas, la sesión no se establecía aunque el enlace respondía al ping, y se estableció al cargar la misma clave. RouterOS no muestra la clave en `print` ni en `/export` — `capturas/f3/edge-bgp-sesiones.png`. Prueba con clave incorrecta (F4): en EDGE se cargó en `to-ISP-1` una clave que no es la de ISP-1; la sesión se cerró (`Connection closed` → `Idle` en el log de ISP-1) y no volvió a establecerse, mientras el ping a 192.0.2.1 seguía respondiendo y `to-ISP-2` seguía en `E`. Al volver a cargar la clave correcta por consola, la sesión volvió a `E` y ISP-1 volvió a aprender las dos LANs — `capturas/f4/edge-bgp-clave-incorrecta.png`, `isp1-bgp-clave-incorrecta.png`, `edge-bgp-clave-correcta.png` |
 | VRRP auth | vrid 10 y vrid 20 en DIST-1 y DIST-2 (F2): `version=2`, `authentication=simple`, una clave por grupo, distintas entre sí | `/interface vrrp print proplist=name,vrid,priority,version,authentication` muestra `simple` en los dos grupos sin la clave, y cada grupo queda con un solo master (DIST-1 en vrid 10, DIST-2 en vrid 20) — `capturas/f2/dist1-vrrp-auth.png`, `dist2-vrrp-auth.png`. Prueba con clave incorrecta (F4, R3/R4): en DIST-2 se cargó en vrrp10 una clave que no es la del vrid 10. Cada DIST descarta los anuncios del otro (`received packet from ... simple authentication failed`) y los dos quedan master del vrid 10 (`RM` en `/interface vrrp print`). Al volver a cargar la clave correcta, DIST-2 volvió a backup — `capturas/f4/dist1-vrrp-doble-master.png`, `dist2-vrrp-doble-master.png`. Las dos pruebas (OSPF y VRRP) se hicieron juntas en DIST-2; con OSPF bien, el doble master solo no deja a nadie sin rutas, porque los dos DIST tienen salida al core |
 | Firewall/ACL (edge) | EDGE (F3): filtro de input y forward con listas `WAN`/`LAN`, address-lists `bgp-peers` y `gestion`, antispoofing en `raw`. ISP-1 e ISP-2: input con solo BGP desde EDGE y ping; UDP rechazado con port-unreachable (traceroute) | Desde ISP-1: la LAN no es alcanzable y la gestión del EDGE (puerto 22) no responde; el ping al EDGE sí. Los contadores de `input: todo lo demas` y `forward: nada nuevo desde los ISP` suben con esas pruebas. BGP y OSPF siguen arriba con el firewall puesto. La regla de BGP marca 0 porque las sesiones ya estaban armadas (entran por `input: respuestas`); el SYN de una sesión nueva pasa por ella — `capturas/f3/isp1-firewall-pruebas.png`, `edge-firewall-input.png`, `edge-firewall-forward.png` |
+| SNMPv3 (monitoreo) | EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (F4, R5): community `monitor-v3` `authPriv` (SHA1/AES), solo lectura, solo desde `gestion`; `public` neutralizada; regla `udp/161` antes del drop final | Una consulta v3 sin autenticación es rechazada (`unsupported security level`) y SNMP solo entra por la regla de `gestion`. Detalle y limitación de la prueba positiva en §6.3 — `capturas/f4/edge-snmp-rechazo-v3-r5.png`, `edge-snmp-firewall-r5.png` |
 
 **Desvíos respecto de la política 1.3 (F1):**
 
@@ -428,12 +429,14 @@ Observaciones:
 | 28/10/2026 | Tomas Costa (R5) | Backlog tras el #17 y el #18 (`2c76ff7`) y merges con merge commit: #19 (`bff8a63`) y #20 (`899e903`) | Registro operativo y reviews aprobadas | Revertir el commit; merges: `git revert -m 1 <merge>` |
 | 29/10/2026 | Tomas Costa (R5) | Verificación de R5 de F2 y F3 en su lab (F2 a F4 cargados desde `configs/` con claves propias, sin commit), memoria §4.1 y §5, capturas y backlog (`0a32553`, `8553b9b`, `43a0785`) | QA independiente de F2 y F3 | Revertir los commits; en el lab, deshabilitar OSPF, VRRP y BGP |
 | 29/10/2026 | Tomas Costa (R5) | Merge del PR #22 con merge commit (`6a140b4`); plantilla de runbook y runbooks de los 5 drills, enlazados desde §4.2, y backlog (`90b5eac`, `92d9333`, `1e18a9f`) | F4: runbook por drill | Merge: `git revert -m 1 6a140b4`; revertir los commits |
+| 29/10/2026 | Tomas Costa (R5) | SNMPv3 de monitoreo en EDGE, CORE y DIST: scripts, memoria §6.3 y §5, capturas, backlog y backups `_snmp` (`9b5158d`, `9e2757d`, `2185785`, `98dc4c2`); cargado en el lab de R5 y diagnóstico temporal ya borrado (sin commit) | F4: monitoreo (SNMP/chequeos) | `/snmp set enabled=no`, borrar la regla de SNMP y revertir los commits |
+| 29/10/2026 | Tomas Costa (R5) | Restore probado de DIST-2 desde su backup `_snmp` en el lab de R5 (sin commit), memoria §6.2, capturas y backlog; community SNMPv3 por consola en los scripts (`5af0dc5`, `e1d6cf6`, `3d9424d`) | Política de backup 1.4: restore probado | Revertir los commits |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backups post-cambio de F1 a F4; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backups post-cambio de F1 a F4; restore probado en DIST-2 el 29/10 (ver al final de la sección). La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -465,6 +468,11 @@ Observaciones:
 | `ISP-2_20261028_f4.rsc` | ISP-2 | Post-cambio (F4, PR #18) | Joaquin Mazza (R2) | Ídem ISP-1 |
 | `ISP-1_20261028_traceroute.rsc` | ISP-1 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | El `_f4` + la regla `input: UDP rechazado (traceroute)` antes del drop final (`87f26c9`, review de R5) |
 | `ISP-2_20261028_traceroute.rsc` | ISP-2 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | Ídem ISP-1 |
+| `EDGE_20261029_snmp.rsc` | EDGE | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | El `_f4` + SNMPv3 (`monitor-v3`, `public` neutralizada, `engine-id-suffix=edge`) y la regla `input: SNMP solo desde gestion` |
+| `CORE-1_20261029_snmp.rsc` | CORE-1 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | El `_f3` + SNMPv3 (`engine-id-suffix=core1`) y la regla de SNMP |
+| `CORE-2_20261029_snmp.rsc` | CORE-2 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | Ídem CORE-1 (`core2`) |
+| `DIST-1_20261029_snmp.rsc` | DIST-1 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | El `_f3` + SNMPv3 (`engine-id-suffix=dist1`) y la regla de SNMP |
+| `DIST-2_20261029_snmp.rsc` | DIST-2 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | Ídem DIST-1 (`dist2`) |
 
 Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo es la hora UTC del router (hora local = UTC − 3):
 
@@ -474,7 +482,7 @@ Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gest
 
 R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mismas IPs, servicios, listas y descubrimiento, y ninguno tiene claves.
 
-- F2, F3 y F4: los encabezados también están en UTC (EDGE `_ospf` `2026-10-22 23:32` → 22/10 20:32; CORE/DIST `_f2` `2026-10-23 00:30`–`00:32` → 22/10 21:30–21:32; EDGE/ISP `_f3` `2026-10-23 19:57` → 23/10 16:57; CORE/DIST `_f3` `2026-10-23 21:08`–`21:09` → 23/10 18:08–18:09; EDGE/ISP `_f4` `2026-10-28 21:49` → 28/10 18:49; ISP `_traceroute` `2026-10-29 01:06` → 28/10 22:06). El `_f4` de EDGE se volvió a exportar después del arreglo del traceroute y no cambió, por eso no tiene un segundo archivo.
+- F2, F3 y F4: los encabezados también están en UTC (EDGE `_ospf` `2026-10-22 23:32` → 22/10 20:32; CORE/DIST `_f2` `2026-10-23 00:30`–`00:32` → 22/10 21:30–21:32; EDGE/ISP `_f3` `2026-10-23 19:57` → 23/10 16:57; CORE/DIST `_f3` `2026-10-23 21:08`–`21:09` → 23/10 18:08–18:09; EDGE/ISP `_f4` `2026-10-28 21:49` → 28/10 18:49; ISP `_traceroute` `2026-10-29 01:06` → 28/10 22:06; EDGE/CORE/DIST `_snmp` `2026-10-29 04:39` → 29/10 01:39). Los `_snmp` son del lab de R5 (sacados por la consola de GNS3 con `/export`): contra el backup anterior de cada router solo cambia lo de SNMP; las otras diferencias son de forma (el `system id` de cada VM, el corte de las líneas largas por el ancho de la consola y, en EDGE, el orden de dos plantillas de OSPF). El `_f4` de EDGE se volvió a exportar después del arreglo del traceroute y no cambió, por eso no tiene un segundo archivo.
 
 R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su fase, y coincide con el script del PR correspondiente (las reglas de firewall de CORE/DIST, regla por regla con `configs/` del #16). Ninguno trae claves: RouterOS no exporta el `auth-key` de OSPF, el `password` de VRRP ni el `tcp-md5-key` de BGP, así que en un restore se vuelven a cargar por consola con los comandos del comentario de cada bloque del script. Para los 5 drills el backup "antes" es el `_f3` de cada router, porque entre F3 y los drills no hubo cambios (los drills 1, 2 y 5 tampoco dejaron cambios: las interfaces y las claves se restauraron, así que no hay `_f4` de CORE/DIST); las estáticas con `check-gateway` del drill 4 fueron temporales y no quedan en el `_f4`.
 
@@ -484,7 +492,7 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 - **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
 - **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
 
-**Restore probado:** pendiente (F4). Procedimiento:
+**Procedimiento de restore:**
 
 1. Dejar el CHR limpio: `/system reset-configuration no-defaults=yes skip-backup=yes`. El router reinicia **sin ninguna IP** y con `admin` sin clave (pide una nueva en el primer login).
 2. Como no tiene IP, no se le puede subir el `.rsc` por red para usar `/import file-name=...`. En GNS3 se abre la consola del nodo y se **pega el contenido del backup** (conviene pegarlo por bloques, sección por sección, para que la consola no pierda caracteres).
@@ -492,11 +500,59 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 3. Recrear usuarios (el `/export` no los trae): `/password` para `admin` y `/user add name=monitor group=read password=<clave>`.
 4. Verificar con `/ip address print`, `/ip service print` y ping al vecino; captura en `capturas/`.
 
+**Restore probado (29/10/2026, R5, lab de R5):** DIST-2 con `DIST-2_20261029_snmp.rsc`.
+
+| Paso | Qué se hizo | Resultado |
+| :---- | :---- | :---- |
+| 1. CHR limpio | `/system reset-configuration no-defaults=yes skip-backup=yes` | Reinicia sin IPs, con identidad `CHR` y pidiendo clave nueva para `admin` — `capturas/f4/dist2-restore-limpio-r5.png`. Mientras tanto DIST-1 queda master de los dos grupos VRRP y las LANs siguen andando (drill 5) |
+| 2. Pegar el backup | El `.rsc` pegado por consola en 4 bloques, tal cual (solo se unieron las líneas partidas con ``) | Entra todo salvo **2 líneas que fallan**: `monitor-v3` (`authentication password minimum length is 8 symbols`) y la plantilla `ospf-transito` (`auth-key must be specified`). El export las trae sin claves y RouterOS no acepta crearlas así |
+| 3. Lo que el export no trae | Claves de VRRP (`/interface vrrp set ... password=`), plantilla `ospf-transito` con `auth-key`, `monitor-v3` con sus dos claves y el usuario `monitor` (`/user add`, que pide la clave) | Hasta cargar las claves de VRRP, DIST-2 queda **master de los dos grupos** a la vez que DIST-1 (`simple authentication failed` en los dos): doble master en las dos LANs. Se corrige al cargar las claves |
+| 4. Sobrante del CHR limpio | `/ip dhcp-client remove [ find ]` | El reset deja un cliente DHCP en `ether1` (uplink a CORE-1) que no está en el backup: el `/export` lista lo que hay, no lo que hay que borrar |
+| 5. Verificación | En DIST-2: `/routing ospf neighbor print`, `/interface vrrp print`, `/user print`; en SRV: `ping` y `trace 10.10.10.10` | OK — CORE-1 y CORE-2 en `Full`, `vrrp10` en `B` y `vrrp20` en `RM`, `admin` y `monitor`; SRV vuelve a salir por DIST-2 (10.10.20.3) — `capturas/f4/dist2-restore-verificacion-r5.png`, `srv-restore-r5.png` |
+| 6. Comparación | `/export` de DIST-2 restaurado contra `DIST-2_20261029_snmp.rsc` | Iguales salvo la fecha y el orden de `ospf-transito` (se creó al final, a mano) |
+
+**Lo que aprendimos del restore** (para el procedimiento de arriba):
+
+- El backup **no se importa tal cual**: OSPF con MD5 y la community SNMPv3 se rechazan sin claves. Hay que tener a mano, desde el gestor, las claves de OSPF, VRRP, BGP (en EDGE/ISP) y SNMP, y pegar esas líneas con la clave.
+- Las claves de VRRP se cargan **apenas se pega el bloque de VRRP**, no al final: un DIST con VRRP sin clave se pone master de los dos grupos y corta las LANs mientras dura el restore.
+- Después del reset hay que borrar el `dhcp-client` que deja el CHR.
+- Lo demás (IPs, listas, firewall, servicios, SNMP, identidad) entra completo desde el `/export`.
+
 ### 6.3 Monitoreo
 
-> Qué se monitorea (enlaces, vecinos OSPF, sesiones BGP, VRRP) y con qué (SNMP, chequeos) — **pendiente de F4**.
+Configuró y probó R5 en su lab (29/10). Script: bloque "F4: monitoreo por SNMPv3" en `configs/EDGE.rsc`, `CORE-1.rsc`, `CORE-2.rsc`, `DIST-1.rsc` y `DIST-2.rsc`.
 
-<!-- -->
+**Qué se monitorea y con qué:**
+
+| Qué | Con qué | Dónde se mira |
+| :---- | :---- | :---- |
+| Que el router está vivo, su nombre y su uptime | SNMPv3 (`sysName`, `sysUpTime`, MIB-II) | Consulta desde un equipo de la red de gestión |
+| Estado de cada interfaz (arriba/abajo, tráfico) | SNMPv3 (`ifOperStatus`, contadores de `IF-MIB`) | Ídem |
+| Vecinos OSPF en `Full` | Consola: `/routing ospf neighbor print`; log: `timeout` y `authentication failed` | §4.1 y drills 2 y 5 |
+| Sesiones BGP `established` | Consola: `/routing bgp session print`; log: `HoldTimer expired` | §4.1 y drill 3 |
+| Master/backup de VRRP | Consola: `/interface vrrp print`; log: `now MASTER` / `now BACKUP` | §4.1 y drills 1 y 5 |
+
+Para OSPF, BGP y VRRP se usan los `print` y los eventos del log, que son los que ya se usaron en los drills: los MIB estándar que expone RouterOS no cubren el estado de estos protocolos con el detalle de la consola.
+
+**Configuración (los 5 routers del grupo; los ISP no, porque son del proveedor):**
+
+- **SNMPv3 `authPriv`:** community `monitor-v3` con `security=private`, autenticación SHA1 y cifrado AES, solo lectura (`write-access=no`) y solo desde la address-list `gestion` (`10.0.0.0/24` y `10.255.255.0/24`), igual que ssh/winbox. Sin v1/v2c: la community viajaría en texto plano (política 1.3).
+- **`public` neutralizada:** viene por defecto y RouterOS no deja borrarla; se le sacó la lectura y se limitó a `127.0.0.1/32`.
+- **Engine ID único:** `engine-id-suffix` con el nombre de cada router. Los CHR del lab salen de la misma imagen y tenían todos el mismo engine ID (`80003a8c04`); con un engine ID repetido el descubrimiento de SNMPv3 falla. Se encontró al probar y quedó en el script.
+- **Firewall:** regla `input: SNMP solo desde gestion` (`udp/161`, lista `LAN`, address-list `gestion`) antes del drop final del firewall de input de F3.
+- **Claves:** la de autenticación y la de cifrado se cargan por consola; no están en el repo y el `/export` no las muestra (la community se exporta sin claves, pero RouterOS no deja crearla sin ellas: el script la deja como comando de consola, y en un restore hay que crearla a mano, §6.2). En el lab de R5 son propias del lab (§5).
+
+**Verificación (29/10, lab de R5):**
+
+| Prueba | Comando | Resultado |
+| :---- | :---- | :---- |
+| Configuración aplicada | en los 5 routers: `/snmp print` y `/snmp community print detail` | OK — SNMP habilitado, engine ID distinto en cada router, `public` con `read-access=no` y `monitor-v3` con `security=private` SHA1/AES — `capturas/f4/edge-snmp-config-r5.png` |
+| El agente responde a través del firewall | en EDGE, community v2c temporal `prueba-r5` (solo lectura, solo desde `10.0.0.2`, CORE-1); en CORE-1: `/tool snmp-get address=10.255.255.3 version=2c community=prueba-r5 oid=1.3.6.1.2.1.1.5.0` | OK — devuelve `EDGE` (`sysName`). Se borró la community al terminar y la misma consulta pasó a dar `timeout` — `capturas/f4/core1-snmp-v2c-prueba-r5.png` |
+| Sin autenticación no responde | en CORE-1: la misma consulta con `version=3` sin claves | OK — EDGE la rechaza: `bad v3 packet security level: 0` / `unsupported security level` en el log (`/system logging add topics=snmp`, solo durante la prueba) — `capturas/f4/edge-snmp-rechazo-v3-r5.png` |
+| El firewall deja pasar SNMP solo por su regla | en EDGE: `/ip firewall filter print stats where chain=input` | OK — las consultas suman en `input: SNMP solo desde gestion` y el drop final queda en 0 — `capturas/f4/edge-snmp-firewall-r5.png` |
+| Consulta SNMPv3 `authPriv` con las claves | en CORE-1: `/tool snmp-get ... version=3 security=private` con las dos claves | **No se pudo completar con el cliente de RouterOS.** Con el engine ID ya único, EDGE recibe la consulta autenticada pero el cliente no completa el descubrimiento y la sincronización de v3 (`unknown engine id`, después `not in time window or incorrect engine boots`) y termina en `timeout`. El servidor se comporta como debe; la prueba positiva de v3 queda para un NMS real desde la red de gestión (por ejemplo, `snmpget -v3 -l authPriv` de net-snmp) |
+
+La community temporal v2c y el log de SNMP se usaron solo para diagnosticar y se borraron (change log, filas "sin commit").
 
 ---
 
@@ -556,8 +612,8 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 ### Operación
 
 - [ ] Change log completo (refleja los commits del repo)
-- [ ] Backups con restore probado
-- [ ] Monitoreo habilitado y documentado
+- [x] Backups con restore probado
+- [x] Monitoreo habilitado y documentado
 - [ ] Runbook por drill + post-mortem global
 
 ### Entrega
