@@ -120,7 +120,7 @@
 ### Los 5 drills (runbook + post-mortem + tiempo)
 
 - [ ] [R5] Diseñar la plantilla de runbook (detección → respuesta → recuperación → post-mortem)
-- [~] [R1] [R3] [R4] [R5] Ejecutar cada drill y medir tiempo de convergencia, rotando quién opera — drills 3 (8 s) y 4 (29 s) operados por R1/R2 (#18); faltan 1, 2 y 5
+- [x] [R1] [R3] [R4] [R5] Ejecutar cada drill y medir tiempo de convergencia, rotando quién opera — drills 3 (8 s) y 4 (29 s) operados por R1/R2 (#18); drills 1 (~2 s), 2 (~1 s) y 5 (2 pings) operados por R3/R4 (#20)
 
 ### Restore probado (política de backup 1.4)
 
@@ -132,12 +132,16 @@
 
 ### Verificación de seguridad (clave incorrecta falla)
 
-- [~] [R1] [R3] [R4] Ejecutar y documentar la prueba de seguridad: adyacencia/sesión con clave incorrecta debe fallar — BGP hecho (#18, R1); faltan OSPF y VRRP (R3/R4)
+- [x] [R1] [R3] [R4] Ejecutar y documentar la prueba de seguridad: adyacencia/sesión con clave incorrecta debe fallar — BGP (#18, R1), OSPF y VRRP (#20, R3/R4)
 - [ ] Intercambio Persona A ↔ Persona B (equivale a la rotación R1↔R2 de la consigna; A ya cubre R1+R2, así que el intercambio real es A revisando OSPF/VRRP y B revisando Edge-ISP, para que ambos puedan defender la parte del otro en F5)
 
 ---
 
 ## Epic F5 — Memoria + defensa · *vence vie 23/10*
+
+### Mejoras detectadas en F4
+
+- [ ] [R4] Evaluar bajar la prioridad VRRP del DIST cuando pierde los uplinks (netwatch o script): hallazgo de la prueba de clave incorrecta de OSPF (memoria §5), sugerido por R1/R2 en la review del #20. Documentarlo en §8 aunque no se aplique
 
 ### Memoria (plantilla completa)
 
