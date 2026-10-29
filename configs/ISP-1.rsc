@@ -90,12 +90,16 @@ add name=to-EDGE instance=bgp-isp1 local.address=192.0.2.1 local.role=ebgp remot
 #   /ip route print where bgp        -> 10.10.10.0/24 y 10.10.20.0/24 aprendidas de EDGE
 
 # ---------- F3: plano de gestion del ISP ----------
-# El ISP solo atiende BGP del cliente y ping; la gestion es por consola de GNS3.
+# El ISP solo atiende BGP del cliente, ping y traceroute; la gestion es por consola de GNS3.
+# El trace de VPCS manda UDP a un puerto alto que cambia en cada corrida (no el 33434 clasico):
+# si se descarta, el ultimo salto no responde (memoria 4.1). Se rechaza con port-unreachable,
+# como un puerto cerrado: el trace llega y no queda ningun servicio UDP abierto.
 /ip firewall filter
 add chain=input connection-state=established,related,untracked action=accept comment="input: respuestas"
 add chain=input connection-state=invalid action=drop comment="input: invalidos"
 add chain=input protocol=icmp action=accept comment="input: ping y diagnostico"
 add chain=input src-address=192.0.2.2 protocol=tcp dst-port=179 action=accept comment="input: BGP solo desde EDGE"
+add chain=input protocol=udp action=reject reject-with=icmp-port-unreachable comment="input: UDP rechazado (traceroute)"
 add chain=input action=drop comment="input: todo lo demas"
 
 # Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
