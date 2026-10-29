@@ -80,16 +80,16 @@
 - [x] [R4] configurar VRRP vrid 10 en DIST-1 (master) — priority 150, VIP 10.10.10.1 (#14)
 - [x] [R4] configurar VRRP vrid 20 en DIST-2 (master) — priority 150, VIP 10.10.20.1 (#14)
 - [x] [R4] activar auth simple en ambos grupos — `version=2`, una clave por grupo (#14; capturas `dist1/dist2-vrrp-auth`)
-- [ ] [R5] verificar master/backup con `/interface vrrp print` — evidencia de implementación en memoria §4.1 (R3/R4); falta la verificación de R5 en su lab
+- [x] [R5] verificar master/backup con `/interface vrrp print` — verificado por R5 en su lab el 29/10 (`dist1-vrrp-r5`, `dist2-vrrp-r5`)
 
 ### OSPF área 0 (con MD5, incluido core–core)
 
 - [x] [R1] [R3] [R4] Configurar OSPF en edge/core/dist, incluido el enlace core-core, con MD5 — EDGE (#13) y CORE/DIST (#14), `auth=md5 auth-id=1`
-- [ ] [R5] Verificar adyacencias FULL edge↔core↔dist — evidencia de implementación en memoria §4.1 (`core1-ospf-vecinos`); falta la verificación de R5 en su lab
+- [x] [R5] Verificar adyacencias FULL edge↔core↔dist — verificado por R5 en su lab el 29/10: CORE-1 y CORE-2 con 4 vecinos en Full cada uno (`core1-ospf-vecinos-r5`, `core2-ospf-vecinos-r5`)
 
 ### Verificación L3 (ping intra-LAN + gateway virtual)
 
-- [ ] [R5] Verificar ping intra-LAN y respuesta del gateway virtual VRRP en ambas LANs — evidencia de implementación en memoria §4.1 (R3/R4); falta la verificación de R5 en su lab
+- [x] [R5] Verificar ping intra-LAN y respuesta del gateway virtual VRRP en ambas LANs — verificado por R5 en su lab el 29/10 (`pc-user-ping-r5`, `srv-ping-r5`)
 
 ---
 
@@ -106,7 +106,7 @@
 
 ### Salida a "Internet" (host → loopback ISP)
 
-- [ ] [R5] Verificar que el host alcanza el loopback del ISP
+- [x] [R5] Verificar que el host alcanza el loopback del ISP — ping y trace desde PC-USER y SRV a 203.0.113.1 y 203.0.113.2, verificado por R5 el 29/10 (memoria §4.1)
 
 ### Firewall edge (filtro + plano de gestión)
 
