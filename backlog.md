@@ -119,7 +119,7 @@
 
 ### Los 5 drills (runbook + post-mortem + tiempo)
 
-- [ ] [R5] Diseñar la plantilla de runbook (detección → respuesta → recuperación → post-mortem)
+- [x] [R5] Diseñar la plantilla de runbook (detección → respuesta → recuperación → post-mortem) — `runbooks/plantilla.md` y un runbook por drill (`drill-1` a `drill-5`), enlazados desde la memoria §4.2
 - [x] [R1] [R3] [R4] [R5] Ejecutar cada drill y medir tiempo de convergencia, rotando quién opera — drills 3 (8 s) y 4 (29 s) operados por R1/R2 (#18); drills 1 (~2 s), 2 (~1 s) y 5 (2 pings) operados por R3/R4 (#20)
 
 ### Restore probado (política de backup 1.4)

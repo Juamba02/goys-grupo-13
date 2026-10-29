@@ -249,9 +249,11 @@ Verificación: `show ip` en cada host (capturas `capturas/f1/pc-user-ip.png` y `
 
 ### 4.2 Los 5 drills de failover
 
-> **Pendiente de F4.** Para cada drill, documentar con la estructura detección → respuesta → recuperación → post-mortem y el tiempo medido.
+Cada drill se documenta con la estructura detección → respuesta → recuperación → post-mortem y el tiempo medido. El procedimiento para repetirlo (estado previo, comandos, medición, limpieza e historial de corridas) está en su runbook, armado con la plantilla [`runbooks/plantilla.md`](../runbooks/plantilla.md).
 
 #### Drill 1 — VRRP: se cae el gateway
+
+Runbook: [`runbooks/drill-1-vrrp.md`](../runbooks/drill-1-vrrp.md).
 
 Operó R3/R4 (28/10). Falla simulada: en DIST-1, master del vrid 10, `/interface ethernet disable ether3` (el puerto de la LAN USERS). Medición: desde PC-USER, `ping 10.10.20.10 -c 25` (1 por segundo hacia SRV, que sale por el gateway virtual 10.10.10.1); la falla se provoca en el ping 5 y la recuperación en el 15, dentro del mismo ping.
 
@@ -263,6 +265,8 @@ Operó R3/R4 (28/10). Falla simulada: en DIST-1, master del vrid 10, `/interface
 
 #### Drill 2 — OSPF: se corta el camino interno
 
+Runbook: [`runbooks/drill-2-ospf.md`](../runbooks/drill-2-ospf.md).
+
 Operó R3/R4 (28/10). Antes de la falla, DIST-1 llega a la loopback de EDGE (10.255.255.3) por ECMP vía CORE-1 y CORE-2, y el `trace` desde PC-USER sale por CORE-1. Falla simulada: en CORE-1 `/interface ethernet disable ether3` (enlace CORE1–DIST1, 10.0.0.12/30). Se corta del lado de CORE-1 a propósito: para DIST-1 el enlace sigue arriba, como cuando se cae el equipo de la otra punta y no el cable. Medición: desde PC-USER, `trace 10.255.255.3` antes y después de la falla y `ping 10.255.255.3 -c 20`; la falla se provoca en el ping 5.
 
 - **Detección:** CORE-1 ve caer su interfaz al instante y genera un LSA nuevo sin el enlace a DIST-1, que llega a DIST-1 por CORE-2. DIST-1 no esperó el *dead interval*: en el SPF el enlace a CORE-1 deja de ser bidireccional y lo descarta. El vecino recién cae por `timeout` unos 35 s después (`/log print where message~"timeout"`).
@@ -272,6 +276,8 @@ Operó R3/R4 (28/10). Antes de la falla, DIST-1 llega a la loopback de EDGE (10.
 - **Post-mortem:** funcionó porque cada DIST tiene dos caminos al core y OSPF ya los tenía calculados. Corrió rápido porque uno de los dos extremos vio caer el enlace. Si ninguno de los dos lo ve (por ejemplo, un switch en el medio que deja de pasar tráfico), la detección depende del *dead interval* de 40 s: con un enlace real convendría BFD o bajar `hello-interval`/`dead-interval` en `ospf-transito`.
 
 #### Drill 3 — BGP: se cae el proveedor
+
+Runbook: [`runbooks/drill-3-bgp.md`](../runbooks/drill-3-bgp.md).
 
 Operó R1/R2 (28/10). Falla simulada: en ISP-1 `/interface disable ether1`, del lado del proveedor, así el enlace del EDGE sigue arriba (como cuando se cae el ISP y no el cable). Medición: desde DIST-1, `/ping 198.51.100.1 src-address=10.10.10.2 interval=1s`; `198.51.100.1` es un destino de prueba que tienen los dos ISP en su loopback, así responde el que esté activo. Antes de la falla la default activa en EDGE es la de ISP-1 (las dos tienen distancia 20 y queda la primera que se aprendió).
 
@@ -285,6 +291,8 @@ Operó R1/R2 (28/10). Falla simulada: en ISP-1 `/interface disable ether1`, del 
 
 #### Drill 4 — check-gateway: failover estático de enlace
 
+Runbook: [`runbooks/drill-4-check-gateway.md`](../runbooks/drill-4-check-gateway.md).
+
 Operó R1 (28/10). Para el drill se agregaron en EDGE dos defaults estáticas temporales con `check-gateway=ping`: `gateway=192.0.2.1 distance=1` (ISP-1) y `gateway=192.0.2.5 distance=2` (ISP-2). Al tener menor distancia que las de BGP (20) son las que se usan, así se mide solo el check-gateway. Misma falla y misma medición que en el drill 3.
 
 - **Detección:** EDGE le hace ping al gateway de cada ruta cada 10 s. Cuando ISP-1 deja de responder, la estática por ISP-1 pasa a `I` (inactiva) en `/ip route print where dst-address=0.0.0.0/0`.
@@ -294,6 +302,8 @@ Operó R1 (28/10). Para el drill se agregaron en EDGE dos defaults estáticas te
 - **Post-mortem:** el check-gateway sirve cuando no hay protocolo de ruteo con el proveedor, pero acá es más lento que BGP con los timers ajustados (29 s contra 8 s) y además solo prueba que el gateway responde: si ISP-1 contesta el ping pero pierde la sesión BGP (por ejemplo, una clave mal cargada), la estática sigue activa, el tráfico sale por ISP-1 y la vuelta no llega porque ISP-1 ya no conoce las LANs. Por eso en el diseño final no quedan estáticas: el failover de proveedor lo hace BGP, que ve las dos cosas (que el ISP está vivo y qué rutas tiene).
 
 #### Drill 5 — Load-sharing VRRP: ambos DIST activos
+
+Runbook: [`runbooks/drill-5-load-sharing.md`](../runbooks/drill-5-load-sharing.md).
 
 Operó R3/R4 (28/10). Estado normal: DIST-1 es master del vrid 10 (USERS, prioridad 150) y DIST-2 del vrid 20 (SERVERS, prioridad 150), así que los dos DIST mueven tráfico. El `trace` lo confirma: desde PC-USER el primer salto es 10.10.10.2 (DIST-1) y desde SRV es 10.10.20.3 (DIST-2). Falla simulada: en DIST-2 `/interface ethernet disable ether3,ether4` (pierde las dos LANs). Medición: desde SRV, `ping 10.10.10.10 -c 25`; la falla se provoca en el ping 5 y la recuperación en el 15, dentro del mismo ping.
 
@@ -417,6 +427,7 @@ Observaciones:
 | 28/10/2026 | Juan Bautista Aramberri (R3/R4) | Drills 1, 2 y 5 y prueba de clave incorrecta de OSPF y VRRP: memoria y capturas (`e35d475`, `3782ec7`, `9453121`, `78e6bb6`); interfaces apagadas y claves incorrectas en DIST-2, todo restaurado (sin commit); merge de `main` en la rama (`2df7642`) | F4: drills y verificación de seguridad | Revertir los commits; en el router, ya restaurado |
 | 28/10/2026 | Tomas Costa (R5) | Backlog tras el #17 y el #18 (`2c76ff7`) y merges con merge commit: #19 (`bff8a63`) y #20 (`899e903`) | Registro operativo y reviews aprobadas | Revertir el commit; merges: `git revert -m 1 <merge>` |
 | 29/10/2026 | Tomas Costa (R5) | Verificación de R5 de F2 y F3 en su lab (F2 a F4 cargados desde `configs/` con claves propias, sin commit), memoria §4.1 y §5, capturas y backlog (`0a32553`, `8553b9b`, `43a0785`) | QA independiente de F2 y F3 | Revertir los commits; en el lab, deshabilitar OSPF, VRRP y BGP |
+| 29/10/2026 | Tomas Costa (R5) | Merge del PR #22 con merge commit (`6a140b4`); plantilla de runbook y runbooks de los 5 drills, enlazados desde §4.2, y backlog (`90b5eac`, `92d9333`, `1e18a9f`) | F4: runbook por drill | Merge: `git revert -m 1 6a140b4`; revertir los commits |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
@@ -531,7 +542,7 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 - [ ] VRRP operativo (2 grupos, load-sharing)
 - [ ] OSPF área 0 con adyacencias (incluido core–core)
 - [ ] BGP eBGP ×2 establecido (multi-homing)
-- [ ] Los 5 drills ejecutados y documentados (runbook + post-mortem + tiempo)
+- [x] Los 5 drills ejecutados y documentados (runbook + post-mortem + tiempo)
 
 ### Seguridad
 
