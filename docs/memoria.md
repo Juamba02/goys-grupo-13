@@ -32,7 +32,7 @@ Del diagrama "Enterprise Network Design (Cisco)" visto en clase, se corrigen 5 d
 
 ### 1.2 Plan de direccionamiento (IPAM)
 
-Principios: espacio privado RFC 1918 (`10.0.0.0/8`) para toda la infraestructura interna; rangos de documentación IANA (RFC 5737: `192.0.2.0/24` y `203.0.113.0/24`) para simular direccionamiento "público" en los enlaces y loopbacks de los ISP, sin usar espacio público real. Cada bloque tiene un propósito único — **cero solapamiento** (verificado programáticamente, ver nota al final de la sección).
+Principios: espacio privado RFC 1918 (`10.0.0.0/8`) para toda la infraestructura interna; rangos de documentación IANA (RFC 5737: `192.0.2.0/24`, `198.51.100.0/24` y `203.0.113.0/24`) para simular direccionamiento "público" en los enlaces y loopbacks de los ISP, sin usar espacio público real. Cada bloque tiene un propósito único — **cero solapamiento** (verificado programáticamente, ver nota al final de la sección).
 
 | Enlace / Red | Subred | Dispositivo A (IP/iface) | Dispositivo B (IP/iface) |
 | :---- | :---: | :---- | :---- |
@@ -47,6 +47,7 @@ Principios: espacio privado RFC 1918 (`10.0.0.0/8`) para toda la infraestructura
 | SERVERS (gateway VRRP) | 10.10.20.0/24 | DIST-1: 10.10.20.2 | DIST-2: 10.10.20.3 |
 | Host USERS (PC-USER, VPCS) | 10.10.10.0/24 | PC-USER: 10.10.10.10 | gateway: 10.10.10.1 (VIP vrid 10) |
 | Host SERVERS (SRV, VPCS) | 10.10.20.0/24 | SRV: 10.10.20.10 | gateway: 10.10.20.1 (VIP vrid 20) |
+| Destino Internet de prueba (drills F4) | 198.51.100.1/32 | ISP-1: loopback | ISP-2: loopback (la misma IP en los dos, no se anuncia por BGP) |
 
 **VRRP:**
 
@@ -73,7 +74,7 @@ Load-sharing: DIST-1 es master del grupo 10 y backup del grupo 20; DIST-2 es mas
 
 **Gestión de switches (descartado):** en F0 se había reservado `10.10.254.0/24` para gestión fuera de banda de los switches. En el proyecto GNS3 los switches son *Ethernet switch* nativos (no gestionables, sin IP), así que ese bloque queda **sin uso**. Se mantiene reservado para no reasignarlo.
 
-**Verificación de no solapamiento:** los bloques `10.255.255.0/24` (loopbacks), `10.0.0.0/24` (enlaces internos), `10.10.10.0/24` y `10.10.20.0/24` (LANs), `10.10.254.0/24` (reservado, sin uso) y los rangos de documentación `192.0.2.0/24` / `203.0.113.0/24` (enlaces y loopbacks de ISP) son disjuntos entre sí; se verificó con `ipaddress` de Python que ningún par de bloques ni de subredes derivadas se superpone.
+**Verificación de no solapamiento:** los bloques `10.255.255.0/24` (loopbacks), `10.0.0.0/24` (enlaces internos), `10.10.10.0/24` y `10.10.20.0/24` (LANs), `10.10.254.0/24` (reservado, sin uso) y los rangos de documentación `192.0.2.0/24` / `203.0.113.0/24` (enlaces y loopbacks de ISP) son disjuntos entre sí; se verificó con `ipaddress` de Python que ningún par de bloques ni de subredes derivadas se superpone. En F4 se sumó `198.51.100.1/32` (destino de prueba de los drills), de otro bloque de documentación (`198.51.100.0/24`) que no se usa en ningún otro lado; la misma IP en ISP-1 e ISP-2 es a propósito, para que responda el proveedor activo.
 
 ### 1.3 Política de seguridad
 
