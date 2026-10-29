@@ -432,6 +432,7 @@ Observaciones:
 | 29/10/2026 | Tomas Costa (R5) | SNMPv3 de monitoreo en EDGE, CORE y DIST: scripts, memoria §6.3 y §5, capturas, backlog y backups `_snmp` (`9b5158d`, `9e2757d`, `2185785`, `98dc4c2`); cargado en el lab de R5 y diagnóstico temporal ya borrado (sin commit) | F4: monitoreo (SNMP/chequeos) | `/snmp set enabled=no`, borrar la regla de SNMP y revertir los commits |
 | 29/10/2026 | Tomas Costa (R5) | Restore probado de DIST-2 desde su backup `_snmp` en el lab de R5 (sin commit), memoria §6.2, capturas y backlog; community SNMPv3 por consola en los scripts (`5af0dc5`, `e1d6cf6`, `3d9424d`) | Política de backup 1.4: restore probado | Revertir los commits |
 | 29/10/2026 | Tomas Costa (R5) | Merges con merge commit: #23 (`3c28062`) y #24 (`8556315`); índice de capturas en §7 (`06c755b`) | Reviews aprobadas; F5: memoria completa | Merges: `git revert -m 1 <merge>`; revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | Lecciones de operación, QA y monitoreo en §8 (`a10fbac`) | F5: conclusiones y lecciones | Revertir el commit |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
