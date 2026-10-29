@@ -458,6 +458,14 @@ R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mi
 
 > Post-mortem global — **pendiente de F5**.
 
+**Edge y proveedores (R1/R2):**
+
+- **Detectar la falla es lo que más tarda.** En el drill 3 el failover ya estaba armado (las dos sesiones arriba y la default de ISP-2 cargada) y aun así el corte fue de 164 s, porque el enlace seguía arriba y BGP solo se entera al vencer el hold-time. Con 9s/3s bajó a 8 s. Los timers por defecto sirven para Internet, no para un cliente que quiere cambiar de proveedor rápido.
+- **Una ruta que "anda" no es lo mismo que una ruta que sirve.** El check-gateway del drill 4 tardó más (29 s) y además solo prueba que el gateway contesta el ping: con la sesión BGP caída y el ISP vivo, la estática seguiría activa y la vuelta no llegaría. Por eso en el diseño final no hay estáticas y la salida depende solo de BGP.
+- **La default entra a OSPF solo si existe.** Con `originate-default=if-installed`, si se caen los dos ISP el EDGE deja de anunciar la default y el resto de la red no manda tráfico a un lugar sin salida. En los drills de un solo ISP el cambio fue invisible para CORE y DIST.
+- **El firewall también corta el diagnóstico.** El drop final de los ISP dejaba sin respuesta al `trace` de los hosts. Se cambió a un rechazo de UDP con port-unreachable, que se comporta como un puerto cerrado sin abrir ningún servicio. Lo encontró la revisión de R5, no una prueba nuestra: conviene probar las herramientas de diagnóstico con el firewall puesto.
+- **Las claves no viajan con la configuración.** La prueba con clave TCP-MD5 incorrecta confirmó que la sesión no levanta, y el `/export` no incluye las claves. Un restore de EDGE o de un ISP no queda andando hasta volver a cargar las claves por consola desde el gestor del grupo.
+
 <!-- -->
 
 ---
@@ -487,16 +495,16 @@ R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mi
 - [x] 7 CHR + 2 switches + 2 hosts levantados y cableados
 - [ ] VRRP operativo (2 grupos, load-sharing)
 - [ ] OSPF área 0 con adyacencias (incluido core–core)
-- [ ] BGP eBGP ×2 establecido (multi-homing)
+- [x] BGP eBGP ×2 establecido (multi-homing)
 - [ ] Los 5 drills ejecutados y documentados (runbook + post-mortem + tiempo)
 
 ### Seguridad
 
 - [x] Hardening aplicado (password, usuario mínimo, servicios apagados)
 - [ ] OSPF MD5 funcionando
-- [ ] BGP TCP-MD5 funcionando
+- [x] BGP TCP-MD5 funcionando
 - [ ] VRRP auth funcionando
-- [ ] Firewall edge aplicado
+- [x] Firewall edge aplicado
 - [ ] Prueba con clave incorrecta → debe **fallar** (documentado)
 
 ### Operación
