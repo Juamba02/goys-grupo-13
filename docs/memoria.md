@@ -430,6 +430,7 @@ Observaciones:
 | 29/10/2026 | Tomas Costa (R5) | Verificación de R5 de F2 y F3 en su lab (F2 a F4 cargados desde `configs/` con claves propias, sin commit), memoria §4.1 y §5, capturas y backlog (`0a32553`, `8553b9b`, `43a0785`) | QA independiente de F2 y F3 | Revertir los commits; en el lab, deshabilitar OSPF, VRRP y BGP |
 | 29/10/2026 | Tomas Costa (R5) | Merge del PR #22 con merge commit (`6a140b4`); plantilla de runbook y runbooks de los 5 drills, enlazados desde §4.2, y backlog (`90b5eac`, `92d9333`, `1e18a9f`) | F4: runbook por drill | Merge: `git revert -m 1 6a140b4`; revertir los commits |
 | 29/10/2026 | Tomas Costa (R5) | SNMPv3 de monitoreo en EDGE, CORE y DIST: scripts, memoria §6.3 y §5, capturas, backlog y backups `_snmp` (`9b5158d`, `9e2757d`, `2185785`, `98dc4c2`); cargado en el lab de R5 y diagnóstico temporal ya borrado (sin commit) | F4: monitoreo (SNMP/chequeos) | `/snmp set enabled=no`, borrar la regla de SNMP y revertir los commits |
+| 29/10/2026 | Tomas Costa (R5) | Restore probado de DIST-2 desde su backup `_snmp` en el lab de R5 (sin commit), memoria §6.2, capturas y backlog; community SNMPv3 por consola en los scripts (`5af0dc5`, `e1d6cf6`, `3d9424d`) | Política de backup 1.4: restore probado | Revertir los commits |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 

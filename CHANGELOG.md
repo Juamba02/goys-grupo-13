@@ -157,3 +157,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 29/10/2026 | Tomas Costa (R5) | `9e2757d` | Memoria §6.3 (monitoreo), §5 (SNMPv3) y §10, con 4 capturas | `docs/memoria.md`, `capturas/f4/` | Revertir el commit |
 | 29/10/2026 | Tomas Costa (R5) | `2185785` | Backlog: SNMP habilitado y documentado | `backlog.md` | Revertir el commit |
 | 29/10/2026 | Tomas Costa (R5) | `98dc4c2` | Backups post-cambio de SNMP de EDGE, CORE y DIST (lab de R5) y registro en §6.2 | `backups/`, `docs/memoria.md` | No aplica (solo respaldo); revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | sin commit (solo lab de R5) | Restore probado: DIST-2 reseteado (`reset-configuration no-defaults=yes`) y restaurado desde `DIST-2_20261029_snmp.rsc`, con las claves por consola, el usuario `monitor` recreado y el `dhcp-client` del CHR borrado | DIST-2 (lab de R5) | Volver a restaurar el mismo backup |
+| 29/10/2026 | Tomas Costa (R5) | `5af0dc5` | La community SNMPv3 pasa a crearse por consola con sus claves (RouterOS rechaza crearla sin claves) | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 (solo script) | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `e1d6cf6` | Memoria §6.2: restore probado de DIST-2, lecciones y 3 capturas; §6.3 y §10 | `docs/memoria.md`, `capturas/f4/` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `3d9424d` | Backlog: restore probado | `backlog.md` | Revertir el commit |
