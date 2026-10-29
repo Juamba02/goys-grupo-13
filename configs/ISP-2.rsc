@@ -4,6 +4,7 @@
 # Si en el proyecto quedo en otra interfaz, cambiar el nombre antes de importar.
 # Importar solo sobre un CHR limpio (/system reset-configuration no-defaults=yes):
 # los add fallan con "already exists" si se vuelve a importar y /import corta en el primer error.
+# Las secciones de F2/F3 van despues del hardening; el usuario monitor va al final.
 
 # ---------- F1: identidad, IPs de enlace y loopback ----------
 
@@ -34,10 +35,7 @@ add address=203.0.113.2/32 interface=loopback comment="loopback"
 # ---------- F1: hardening (politica de seguridad, memoria 1.3) ----------
 # Las claves NO van en este archivo. Despues de importar, desde la consola:
 #   /password                                   (clave de admin, del gestor del grupo)
-#   /user set monitor password=<clave> disabled=no
-
-/user
-add name=monitor group=read disabled=yes comment="solo lectura / consultas"
+#   /user set monitor password=<clave> disabled=no   (si no se cargo al pegar, ver el final)
 
 # gestion solo por consola de GNS3: ni el cliente ni el otro ISP tienen acceso
 /ip service
@@ -71,3 +69,41 @@ set [ find name=winbox ] available-from=203.0.113.2/32
 set [ find default-name=ether2 ] disabled=yes comment="sin uso"
 set [ find default-name=ether3 ] disabled=yes comment="sin uso"
 set [ find default-name=ether4 ] disabled=yes comment="sin uso"
+
+# ---------- F3: eBGP con EDGE (memoria 1.3: TCP-MD5, una clave distinta por sesion) ----------
+# ISP-2 (AS 65002) anuncia su loopback y le manda la ruta por defecto al cliente (EDGE, AS 65000).
+# La clave TCP-MD5 NO va en este archivo: la sesion se crea deshabilitada y se activa por consola:
+#   /routing bgp connection set [ find name=to-EDGE ] tcp-md5-key=<clave de la sesion EDGE-ISP-2> disabled=no
+
+/ip firewall address-list
+add list=bgp-anuncios address=203.0.113.2/32 comment="loopback de ISP-2 anunciada por BGP"
+
+# en 7.24 el AS y el router-id van en /routing bgp instance; la conexion apunta a la instancia
+/routing bgp instance
+add name=bgp-isp2 as=65002 router-id=203.0.113.2 comment="AS 65002"
+
+/routing bgp connection
+add name=to-EDGE instance=bgp-isp2 local.address=192.0.2.5 local.role=ebgp remote.address=192.0.2.6 remote.as=65000 output.network=bgp-anuncios output.default-originate=always disabled=yes comment="eBGP con EDGE (cliente AS 65000)"
+
+# Verificacion:
+#   /routing bgp session print       -> to-EDGE en established
+#   /ip route print where bgp        -> 10.10.10.0/24 y 10.10.20.0/24 aprendidas de EDGE
+
+# ---------- F3: plano de gestion del ISP ----------
+# El ISP solo atiende BGP del cliente, ping y traceroute; la gestion es por consola de GNS3.
+# El trace de VPCS manda UDP a un puerto alto que cambia en cada corrida (no el 33434 clasico):
+# si se descarta, el ultimo salto no responde (memoria 4.1). Se rechaza con port-unreachable,
+# como un puerto cerrado: el trace llega y no queda ningun servicio UDP abierto.
+/ip firewall filter
+add chain=input connection-state=established,related,untracked action=accept comment="input: respuestas"
+add chain=input connection-state=invalid action=drop comment="input: invalidos"
+add chain=input protocol=icmp action=accept comment="input: ping y diagnostico"
+add chain=input src-address=192.0.2.6 protocol=tcp dst-port=179 action=accept comment="input: BGP solo desde EDGE"
+add chain=input protocol=udp action=reject reject-with=icmp-port-unreachable comment="input: UDP rechazado (traceroute)"
+add chain=input action=drop comment="input: todo lo demas"
+
+# Usuario de solo lectura. Va al final a proposito: si el script se pega en la consola,
+# RouterOS 7.24 pide la clave del usuario en este paso y, si hubiera mas lineas despues,
+# se comeria la siguiente como clave. Escribir la clave de monitor cuando la pida y despues:
+#   /user set monitor disabled=no
+/user add name=monitor group=read disabled=yes comment="solo lectura / consultas"
