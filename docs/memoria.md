@@ -380,7 +380,7 @@ Observaciones:
 | 22–23/10/2026 | Juan Bautista Aramberri (R3/R4) | OSPF con MD5 en CORE/DIST y VRRP con auth en DIST-1/DIST-2: scripts, memoria y capturas (`3a24ff7`, `85d3c20`, `86f58ab`, `6084671`, `1d9e5ea`, `24ffb6a`, `6c89f53`, `cb612c7`); claves cargadas por consola (sin commit) | F2: OSPF, VRRP load-sharing (memoria 1.2) y auth (1.3) | Deshabilitar la plantilla y los grupos VRRP y revertir los commits |
 | 23/10/2026 | Juan Bautista Aramberri (R3/R4) | Plano de gestión de CORE/DIST con firewall de input (`63dce5c`, `cfce954`, `12ec9e3`, `503e5af`) | F3: proteger el plano de gestión | `/ip firewall filter disable [ find ]` y revertir los commits |
 | 23–28/10/2026 | Joaquin Mazza (R1/R2) | Merges con merge commit: #13 (`d1b54d2`), #14 (`f007fac`) y #16 (`e2f7e3e`); merge de `main` en la rama del #14 por R3/R4 (`89c3252`) | Reviews aprobadas | Merge del PR: `git revert -m 1 <merge>`. El de sincronización va junto con el merge de su PR |
-| 28/10/2026 | Tomas Costa (R5) | Backups post-cambio de F2, F3 y F4 (`62aa60a`), registro en §6.2 (`97d88dd`) y backlog (`d2b4066`) | Política de backup 1.4 y registro operativo | No aplica (solo respaldo); revertir los commits de documentación |
+| 28/10/2026 | Tomas Costa (R5) | Backups post-cambio de F2, F3 y F4 (`62aa60a`, `d443c55`), registro en §6.2 (`97d88dd`) y backlog (`d2b4066`) | Política de backup 1.4 y registro operativo | No aplica (solo respaldo); revertir los commits de documentación |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 

@@ -114,3 +114,4 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 28/10/2026 | Tomas Costa (R5) | `62aa60a` | Backups post-cambio de F2, F3 y F4 de los 7 routers (tomados por R1/R2 y R3/R4) | `backups/` | No aplica (solo respaldo) |
 | 28/10/2026 | Tomas Costa (R5) | `97d88dd` | Memoria §6.2: registro de los 15 backups nuevos, hora de cada encabezado y revisión de R5 | `docs/memoria.md` | Revertir el commit |
 | 28/10/2026 | Tomas Costa (R5) | `d2b4066` | Backlog: estado de F2, F3 y F4 | `backlog.md` | Revertir el commit |
+| 28/10/2026 | Tomas Costa (R5) | `d443c55` | Backups de ISP-1 e ISP-2 con el rechazo de UDP para el traceroute (tomados por R2 después de `87f26c9`) y registro en §6.2 | `backups/`, `docs/memoria.md` | No aplica (solo respaldo); revertir el commit |
