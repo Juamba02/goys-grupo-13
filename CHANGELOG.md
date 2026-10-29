@@ -161,3 +161,7 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 29/10/2026 | Tomas Costa (R5) | `5af0dc5` | La community SNMPv3 pasa a crearse por consola con sus claves (RouterOS rechaza crearla sin claves) | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 (solo script) | Revertir el commit |
 | 29/10/2026 | Tomas Costa (R5) | `e1d6cf6` | Memoria §6.2: restore probado de DIST-2, lecciones y 3 capturas; §6.3 y §10 | `docs/memoria.md`, `capturas/f4/` | Revertir el commit |
 | 29/10/2026 | Tomas Costa (R5) | `3d9424d` | Backlog: restore probado | `backlog.md` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `3c28062` | Merge del PR #23 con merge commit | `main` | `git revert -m 1 3c28062` |
+| 29/10/2026 | Tomas Costa (R5) | `8556315` | Merge del PR #24 con merge commit | `main` | `git revert -m 1 8556315` |
+| 29/10/2026 | Tomas Costa (R5) | `06c755b` | Memoria §7: índice de las 110 capturas por fase, con lo que prueba cada una, quién la tomó y dónde se usa | `docs/memoria.md` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `a10fbac` | Memoria §8: lecciones de operación, QA y monitoreo de R5 | `docs/memoria.md` | Revertir el commit |

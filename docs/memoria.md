@@ -431,6 +431,8 @@ Observaciones:
 | 29/10/2026 | Tomas Costa (R5) | Merge del PR #22 con merge commit (`6a140b4`); plantilla de runbook y runbooks de los 5 drills, enlazados desde §4.2, y backlog (`90b5eac`, `92d9333`, `1e18a9f`) | F4: runbook por drill | Merge: `git revert -m 1 6a140b4`; revertir los commits |
 | 29/10/2026 | Tomas Costa (R5) | SNMPv3 de monitoreo en EDGE, CORE y DIST: scripts, memoria §6.3 y §5, capturas, backlog y backups `_snmp` (`9b5158d`, `9e2757d`, `2185785`, `98dc4c2`); cargado en el lab de R5 y diagnóstico temporal ya borrado (sin commit) | F4: monitoreo (SNMP/chequeos) | `/snmp set enabled=no`, borrar la regla de SNMP y revertir los commits |
 | 29/10/2026 | Tomas Costa (R5) | Restore probado de DIST-2 desde su backup `_snmp` en el lab de R5 (sin commit), memoria §6.2, capturas y backlog; community SNMPv3 por consola en los scripts (`5af0dc5`, `e1d6cf6`, `3d9424d`) | Política de backup 1.4: restore probado | Revertir los commits |
+| 29/10/2026 | Tomas Costa (R5) | Merges con merge commit: #23 (`3c28062`) y #24 (`8556315`); índice de capturas en §7 (`06c755b`) | Reviews aprobadas; F5: memoria completa | Merges: `git revert -m 1 <merge>`; revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | Lecciones de operación, QA y monitoreo en §8 (`a10fbac`) | F5: conclusiones y lecciones | Revertir el commit |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
@@ -558,9 +560,54 @@ La community temporal v2c y el log de SNMP se usaron solo para diagnosticar y se
 
 ## 7. Capturas
 
-> Listar o enlazar la carpeta de capturas (drills, tablas, failover) — **pendiente de F4/F5**.
+Las 110 capturas están en [`capturas/`](../capturas/), en una carpeta por fase (`f1` a `f4`), con el nombre `<router o host>-<qué muestra>.png`. Las que llevan el sufijo `-r5` son de la verificación independiente de R5 en su propio lab; las demás, de quien implementó (R1/R2 o R3/R4). Este índice las agrupa por lo que prueban y dice en qué sección se usan como evidencia.
 
-<!-- -->
+### 7.1 F1 — Topología, direccionamiento y hardening ([`capturas/f1/`](../capturas/f1/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| Topología en GNS3 (parcial del 15/10 y completa del 16/10) | `topologia-gns3`, `topologia-gns3-completa` | R5 | §2 |
+| IPs de los hosts | `pc-user-ip`, `srv-ip` | R5 | §3 |
+| IPs y ping a los vecinos directos (implementación) | `edge-ips-y-pings`, `isp1-isp2-ips-y-pings`, `edge-core-pings`, `core1-pings`, `core2-pings`, `dist1-pings`, `dist2-pings` | R1/R2, R3/R4 | §4.1 |
+| IPs y ping a los vecinos directos (verificación) | `edge-ips-ping`, `isp1-ips-ping`, `isp2-ips-ping`, `core1-ips-ping`, `core2-ips-ping`, `dist1-ips-ping`, `dist2-ips-ping` | R5 | §4.1 |
+| Hardening de CORE/DIST recién aplicado (implementación) | `core1-servicios-y-monitor`, `core2-ips-servicios-y-monitor`, `dist1-ips-servicios-y-monitor`, `dist2-ips-servicios-y-monitor`, `dist1-bandwidth-server` | R3/R4 | §5 |
+| Hardening de EDGE e ISP: servicios, `monitor` de solo lectura, descubrimiento y MAC server, puertos sin uso apagados | `edge-servicios`, `isp1-servicios`, `isp2-servicios`, `edge-monitor-solo-lectura`, `isp1-monitor-solo-lectura`, `isp2-monitor-solo-lectura`, `edge-neighbor-macserver`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver`, `edge-mac-winbox`, `isp1-interfaces`, `isp2-interfaces` | R5 | §5 |
+| Hardening de CORE/DIST después de reiniciar: servicios, `monitor` de solo lectura, descubrimiento y MAC server, servicios dinámicos que desaparecen | `core1-servicios`, `core2-servicios`, `dist1-servicios`, `dist2-servicios`, `dist1-servicios-reinicio`, `dist1-servicios-estable`, `core1-monitor-solo-lectura`, `core2-monitor-solo-lectura`, `dist1-monitor-solo-lectura`, `dist2-monitor-solo-lectura`, `core1-neighbor-macserver`, `core2-neighbor-macserver`, `dist1-neighbor-macserver`, `dist2-neighbor-macserver` | R5 | §5 |
+
+### 7.2 F2 — OSPF y VRRP ([`capturas/f2/`](../capturas/f2/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| OSPF de EDGE: vecinos, rutas, MD5 y ping entre loopbacks | `edge-ospf-vecinos`, `edge-ospf-rutas`, `edge-ospf-md5`, `core1-ospf-md5`, `edge-ping-loopbacks` | R1 | §4.1, §5 |
+| OSPF de CORE/DIST con MD5 y topología completa | `core1-ospf`, `core2-ospf`, `ospf-md5`, `core1-ospf-vecinos` | R3/R4 | §4.1, §5 |
+| VRRP master/backup y auth | `dist1-ospf-vrrp`, `dist2-ospf-vrrp`, `dist1-vrrp-auth`, `dist2-vrrp-auth` | R4 | §4.1, §5 |
+| Gateway virtual e intra-LAN desde los hosts | `pc-user-ping`, `srv-ping` | R3/R4 | §4.1 |
+| Verificación de F2: los dos CORE con 4 vecinos en `Full`, VRRP con un master por grupo, ping a las VIP y entre hosts | `core1-ospf-vecinos-r5`, `core2-ospf-vecinos-r5`, `dist1-vrrp-r5`, `dist2-vrrp-r5`, `pc-user-ping-r5`, `srv-ping-r5` | R5 | §4.1 |
+
+### 7.3 F3 — BGP y firewall ([`capturas/f3/`](../capturas/f3/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| Sesiones eBGP y rutas en EDGE y en los ISP | `edge-bgp-sesiones`, `edge-bgp-rutas`, `isp1-bgp-rutas`, `isp2-bgp-rutas` | R1/R2 | §4.1, §5 |
+| Firewall del EDGE y de los ISP | `edge-firewall-input`, `edge-firewall-forward`, `isp1-firewall-pruebas` | R1/R2 | §4.1, §5 |
+| Plano de gestión de CORE/DIST: gestión bloqueada desde la LAN | `core1-firewall`, `dist1-firewall`, `pc-user-gestion-bloqueada` | R3/R4 | §4.1, §5 |
+| Verificación de F3: rutas BGP en EDGE y traceroute desde los hosts a las loopbacks de los ISP | `edge-bgp-rutas-r5`, `pc-user-trace-isp-r5`, `srv-trace-isp-r5` | R5 | §4.1 |
+
+### 7.4 F4 — Drills, pruebas de clave incorrecta, monitoreo y restore ([`capturas/f4/`](../capturas/f4/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| Drill 1 — VRRP: se cae el gateway | `pc-user-drill1-ping`, `dist2-drill1-vrrp` | R3/R4 | §4.2, `runbooks/drill-1-vrrp.md` |
+| Drill 2 — OSPF: se corta el camino interno | `pc-user-drill2-ping`, `dist1-drill2-ruta`, `dist1-drill2-ospf` | R3/R4 | §4.2, `runbooks/drill-2-ospf.md` |
+| Drill 3 — BGP: se cae el proveedor (timers por defecto y 9s/3s) | `edge-drill3-holdtimer`, `dist1-drill3-ping-1`, `edge-drill3-holdtimer-9s`, `dist1-drill3-ping-2` | R1/R2 | §4.2, `runbooks/drill-3-bgp.md` |
+| Drill 4 — check-gateway | `edge-drill4-check-gateway`, `dist1-drill4-ping` | R1 | §4.2, `runbooks/drill-4-check-gateway.md` |
+| Drill 5 — load-sharing VRRP | `srv-drill5-ping`, `dist1-drill5-vrrp` | R3/R4 | §4.2, `runbooks/drill-5-load-sharing.md` |
+| Clave incorrecta de BGP: la sesión no levanta y vuelve con la correcta | `edge-bgp-clave-incorrecta`, `isp1-bgp-clave-incorrecta`, `edge-bgp-clave-correcta` | R1 | §5 |
+| Clave incorrecta de OSPF y de VRRP: adyacencias caídas y doble master | `dist2-clave-incorrecta`, `core1-ospf-sin-dist2`, `dist1-vrrp-doble-master`, `dist2-vrrp-doble-master` | R3/R4 | §5 |
+| Monitoreo SNMPv3: configuración, firewall, rechazo sin autenticación y prueba del agente | `edge-snmp-config-r5`, `edge-snmp-firewall-r5`, `edge-snmp-rechazo-v3-r5`, `core1-snmp-v2c-prueba-r5` | R5 | §5, §6.3 |
+| Restore probado de DIST-2 | `dist2-restore-limpio-r5`, `dist2-restore-verificacion-r5`, `srv-restore-r5` | R5 | §6.2 |
+
+Control de R5 al armar el índice: todas las capturas que cita la memoria existen en `capturas/`, y todas las de `capturas/` aparecen en este índice. Cuatro de implementación de CORE/DIST (`core1-servicios-y-monitor`, `core2-ips-servicios-y-monitor`, `dist2-ips-servicios-y-monitor` y `dist1-bandwidth-server`) no estaban citadas en ninguna sección y quedan referenciadas acá.
 
 ---
 
@@ -569,6 +616,15 @@ La community temporal v2c y el log de SNMP se usaron solo para diagnosticar y se
 > Post-mortem global — **pendiente de F5**.
 
 <!-- -->
+
+**Operación, QA y monitoreo (R5):**
+
+- **Verificar en otro lab encuentra lo que el que implementó no ve.** Las verificaciones de R5 se hicieron en un lab propio, cargando los scripts del repo (CORE/DIST sobre CHR limpios en F1, y F2 a F4 encima de lo anterior), y no mirando el lab de quien configuró. Así aparecieron cosas que en el lab original andaban o no se veían: el `trace` de los hosts cortado por el firewall de los ISP (#17), `198.51.100.1/32` fuera del IPAM (#18), drills sin captura del ping que respaldara el tiempo medido (#20) y capturas que ninguna sección citaba (§7). La review sirve más cuando prueba la parte del otro, no solo cuando la lee.
+- **Pegar un script por consola no es lo mismo que importarlo.** Se perdieron líneas sin aviso (`/ip service` en CORE-1), otras parecían no haber entrado y sí estaban (el `add` de SNMP, que al repetirlo daba `already exists`), una última línea sin salto quedó escrita sin ejecutarse (`mac-winbox` en `all`) y volver a pegar un bloque duplicó la regla de SNMP en CORE-1, CORE-2, DIST-1 y DIST-2. `/user add` pide la clave y se come la línea siguiente, por eso `monitor` va al final de cada script. Lo que funcionó: pegar de a un bloque, terminar cada bloque con un `print` de control y pegar de a una línea las críticas (claves, firewall).
+- **Un backup que no se restauró no es un backup.** El restore de DIST-2 (§6.2) mostró que el `/export` no se importa tal cual: la plantilla de OSPF con MD5 y la community SNMPv3 se rechazan sin claves, VRRP sin clave deja al router restaurado como master de los dos grupos (doble master en las dos LANs) y el reset del CHR deja un `dhcp-client` que el backup no borra. Ninguna de las tres cosas se veía mirando el archivo: hubo que restaurarlo. El procedimiento quedó corregido y el script de SNMP también (#24).
+- **Clonar routers de una misma imagen repite identificadores.** Los CHR del lab salen de la misma OVA y tenían todos el mismo engine ID de SNMP (`80003a8c04`), y SNMPv3 necesita uno único por equipo. Se vio en `/snmp print` mientras se buscaba por qué fallaba la consulta, y se corrigió con un `engine-id-suffix` por router en los scripts. No alcanzó para que el cliente de RouterOS completara la consulta (punto siguiente), pero un engine ID repetido puede confundir a cualquier NMS que consulte a varios routers, porque identifica a cada agente por ese valor. Los router-id de OSPF y BGP no tuvieron el problema porque se fijan a mano desde F1.
+- **Probar con lo que hay y decir lo que no se pudo probar.** El cliente SNMP de RouterOS no completa una consulta v3 con autenticación y cifrado. En lugar de bajar la seguridad a v2c se probó lo demás por partes: el agente responde a través del firewall (community v2c temporal, borrada al terminar), las consultas sin autenticación se rechazan y el tráfico entra solo por su regla. La consulta v3 con claves quedó documentada como no verificada en §6.3. Una evidencia incompleta pero honesta se defiende mejor que una que no se puede repetir.
+- **El registro tiene que poder reconstruir lo que pasó.** El change log va una fila por commit, con los merge commits y las filas "sin commit" de lo que se hizo solo en los routers (claves, drills, diagnósticos). Los encabezados de los `/export` están en UTC (hora local = UTC − 3) y la §6.2 hace la conversión: sin eso, un backup tomado el 28/10 a la noche figura como del 29/10 y no coincide con el change log. Los merges de sincronización (`main` dentro de una rama) no se revierten solos: van junto con el merge de su PR, como corrigió R1/R2 en la review del #12.
 
 ---
 
