@@ -128,12 +128,12 @@ add chain=input action=drop comment="input: todo lo demas"
 # La community public viene por defecto y no se puede borrar: se le saca la lectura y se limita al
 # propio router. engine-id-suffix distinto en cada router: los CHR clonados de la misma imagen
 # comparten el engine ID y SNMPv3 necesita uno unico por equipo (si se repite, v3 no responde).
-# Las claves NO van en este archivo ni salen en el /export: la community se crea sin claves y se
-# cargan por consola (una de autenticacion y otra de cifrado, minimo 8 caracteres):
-#   /snmp community set [ find name=monitor-v3 ] authentication-password=<clave auth SNMP> encryption-password=<clave priv SNMP>
+# Las claves NO van en este archivo ni salen en el /export, y RouterOS 7.24 no acepta crear la
+# community v3 sin ellas (minimo 8 caracteres; se comprobo en el restore, memoria 6.2), asi que se
+# crea por consola, con una clave de autenticacion y otra de cifrado:
+#   /snmp community add name=monitor-v3 security=private authentication-protocol=SHA1 authentication-password=<clave auth SNMP> encryption-protocol=AES encryption-password=<clave priv SNMP> read-access=yes write-access=no addresses=10.0.0.0/24,10.255.255.0/24
 /snmp community
 set [ find default=yes ] read-access=no addresses=127.0.0.1/32
-add name=monitor-v3 security=private authentication-protocol=SHA1 encryption-protocol=AES read-access=yes write-access=no addresses=10.0.0.0/24,10.255.255.0/24
 /snmp set enabled=yes contact="grupo 13 - R5" location=CORE-2 engine-id-suffix=core2
 /ip firewall filter add chain=input in-interface-list=LAN src-address-list=gestion protocol=udp dst-port=161 action=accept comment="input: SNMP solo desde gestion" place-before=[ find comment="input: todo lo demas" ]
 
