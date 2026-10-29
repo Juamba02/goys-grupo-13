@@ -395,12 +395,22 @@ Observaciones:
 | 16/10/2026 | Tomas Costa (R5) | Backups BASE de CORE/DIST y `_puertos` de ISP-1/ISP-2 (`3f8bd42`) y registro en §6.2 (`e73d3ff`) | Política de backup 1.4: BASE 7/7 y backup post-cambio | No aplica (solo respaldo) |
 | 16/10/2026 | Tomas Costa (R5) | Correcciones de la review de R1/R2 al PR #12: rollback de los merges de sincronización y F0 cerrado en el backlog (`363f22a`, `186e10e`) | Review R1/R2 | Revertir los commits |
 | 16/10/2026 | Tomas Costa (R5) | Verificación de hardening de R5 en CORE/DIST (CORE/DIST cargados en el lab de R5, sin commit), capturas, memoria y backlog (`38a281c`, `1a53199`, `1a48996`, `983dcfb`, `5133e61`, `ead42d8`, `fd744f6`) | QA independiente de F1: cierre de F1 | Revertir los commits |
+| 16/10/2026 | Tomas Costa (R5) | Merge del PR #12 con merge commit (`dd21fa0`) | Reviews aprobadas | `git revert -m 1 dd21fa0` |
+| 22–23/10/2026 | Joaquin Mazza (R1) | OSPF con MD5 en EDGE: script, memoria y capturas (`3e655a9`, `731d907`, `970888c`, `6742ec3`); clave MD5 cargada por consola (sin commit) | F2: OSPF área 0 con MD5 (política 1.3) | Deshabilitar la plantilla `ospf-transito` y revertir los commits |
+| 22–23/10/2026 | Juan Bautista Aramberri (R3/R4) | OSPF con MD5 en CORE/DIST y VRRP con auth en DIST-1/DIST-2: scripts, memoria y capturas (`3a24ff7`, `85d3c20`, `86f58ab`, `6084671`, `1d9e5ea`, `24ffb6a`, `6c89f53`, `cb612c7`); claves cargadas por consola (sin commit) | F2: OSPF, VRRP load-sharing (memoria 1.2) y auth (1.3) | Deshabilitar la plantilla y los grupos VRRP y revertir los commits |
+| 23/10/2026 | Juan Bautista Aramberri (R3/R4) | Plano de gestión de CORE/DIST con firewall de input (`63dce5c`, `cfce954`, `12ec9e3`, `503e5af`) | F3: proteger el plano de gestión | `/ip firewall filter disable [ find ]` y revertir los commits |
+| 23/10/2026 | Joaquin Mazza (R1/R2) | eBGP con TCP-MD5 en EDGE, ISP-1 e ISP-2, firewall del EDGE y plano de gestión de los ISP: scripts, memoria y capturas (`9a37edc`, `3b1d9b2`, `358a0bf`, `fdb4cc3`, `a3e0782`, `610e417`, `a93d09e`); claves TCP-MD5 cargadas por consola (sin commit) | F3: BGP multi-homing y firewall edge | Deshabilitar las sesiones BGP y los filtros (`/ip firewall filter disable [ find ]`) y revertir los commits |
+| 23–28/10/2026 | Joaquin Mazza (R1/R2) | Merges con merge commit: #13 (`d1b54d2`), #14 (`f007fac`) y #16 (`e2f7e3e`); merge de `main` en la rama del #14 por R3/R4 (`89c3252`) | Reviews aprobadas | Merge del PR: `git revert -m 1 <merge>`. El de sincronización va junto con el merge de su PR |
+| 28/10/2026 | Joaquin Mazza (R1/R2) | Drills 3 y 4 con post-mortem (timers de BGP en 9s), destino de prueba `198.51.100.1` y prueba de clave TCP-MD5 incorrecta (`3c48e29`, `4424874`, `c38b27e`, `dd5d692`); estáticas del drill 4 temporales (sin commit) | F4: drills y verificación de seguridad | `hold-time=3m keepalive-time=1m`, borrar la IP y revertir los commits |
+| 28/10/2026 | Joaquin Mazza (R1/R2) | Correcciones de la review de R5: UDP rechazado para el traceroute (`87f26c9`) y `198.51.100.1/32` en el IPAM (`9602c0b`); merge de la rama del #17 en la del #18 (`3c5bddb`) | Review R5 de los PR #17 y #18 | Revertir los commits; el de sincronización va junto con el merge del #18 |
+| 28/10/2026 | Tomas Costa (R5) | Merges con merge commit: #17 (`9848a0f`) y #18 (`dd52628`) | Reviews aprobadas | `git revert -m 1 <merge>` |
+| 28/10/2026 | Tomas Costa (R5) | Backups post-cambio de F2, F3 y F4 (`62aa60a`, `d443c55`), registro en §6.2 (`97d88dd`) y backlog (`d2b4066`) | Política de backup 1.4 y registro operativo | No aplica (solo respaldo); revertir los commits de documentación |
 
 > Detalle completo, una fila por commit, en `CHANGELOG.md`. Los PR #3, #4 y #6 se mergearon con *squash*: se cita el hash de `main` y, separado por `/`, el commit original de la rama.
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backup post-cambio de ISP-1 e ISP-2; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backups post-cambio de F1 a F4; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -415,6 +425,23 @@ Observaciones:
 | `DIST-2_20261016_base.rsc` | DIST-2 | Snapshot BASE (F1) | Juan Bautista Aramberri (R4) | IPs de enlace y de las dos LAN, loopback, listas LAN/ACCESS, hardening |
 | `ISP-1_20261016_puertos.rsc` | ISP-1 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
 | `ISP-2_20261016_puertos.rsc` | ISP-2 | Post-cambio (F1, PR #9) | Joaquin Mazza (R2) | El BASE + `ether2`–`ether4` deshabilitadas (`sin uso`) |
+| `EDGE_20261022_ospf.rsc` | EDGE | Post-cambio (F2, PR #13) | Joaquin Mazza (R1) | El BASE + OSPF: `ospf-v2`, `backbone`, `ospf-transito` en `ether3`/`ether4` con MD5 y loopback pasiva |
+| `CORE-1_20261022_f2.rsc` | CORE-1 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R3) | El BASE + OSPF: `ospf-transito` en `ether1`–`ether4` con MD5 y loopback pasiva |
+| `CORE-2_20261022_f2.rsc` | CORE-2 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R3) | Ídem CORE-1 |
+| `DIST-1_20261022_f2.rsc` | DIST-1 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R4) | El BASE + OSPF (tránsito con MD5, loopback y LANs pasivas) y VRRP: `vrrp10` master (150), `vrrp20` backup, `version=2`, `authentication=simple`, VIPs |
+| `DIST-2_20261022_f2.rsc` | DIST-2 | Post-cambio (F2, PR #14) | Juan Bautista Aramberri (R4) | Ídem DIST-1 con las prioridades al revés: `vrrp20` master (150), `vrrp10` backup |
+| `EDGE_20261023_f3.rsc` | EDGE | Post-cambio (F3, PR #17) | Joaquin Mazza (R1) | El `_ospf` + BGP (`bgp-edge`, `to-ISP-1`/`to-ISP-2`, filtros `bgp-out-isp`/`bgp-in-isp`, `originate-default=if-installed`) y firewall (input, forward, raw) |
+| `ISP-1_20261023_f3.rsc` | ISP-1 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | El `_puertos` + BGP (`bgp-isp1`, `to-EDGE` con `default-originate`, loopback anunciada) y firewall de input |
+| `ISP-2_20261023_f3.rsc` | ISP-2 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | Ídem ISP-1 con AS 65002 |
+| `CORE-1_20261023_f3.rsc` | CORE-1 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R3) | El `_f2` + firewall de input (address-list `gestion`, OSPF y descubrimiento por `LAN`, drop final) |
+| `CORE-2_20261023_f3.rsc` | CORE-2 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R3) | Ídem CORE-1 |
+| `DIST-1_20261023_f3.rsc` | DIST-1 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R4) | El `_f2` + firewall de input, con VRRP aceptado solo por `ACCESS` |
+| `DIST-2_20261023_f3.rsc` | DIST-2 | Post-cambio (F3, PR #16) | Juan Bautista Aramberri (R4) | Ídem DIST-1 |
+| `EDGE_20261028_f4.rsc` | EDGE | Post-cambio (F4, PR #18) | Joaquin Mazza (R1) | El `_f3` + `hold-time=9s keepalive-time=3s` en las dos sesiones (post-mortem del drill 3) |
+| `ISP-1_20261028_f4.rsc` | ISP-1 | Post-cambio (F4, PR #18) | Joaquin Mazza (R2) | El `_f3` + `hold-time=9s keepalive-time=3s` y `198.51.100.1/32` en la loopback (destino de prueba de los drills) |
+| `ISP-2_20261028_f4.rsc` | ISP-2 | Post-cambio (F4, PR #18) | Joaquin Mazza (R2) | Ídem ISP-1 |
+| `ISP-1_20261028_traceroute.rsc` | ISP-1 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | El `_f4` + la regla `input: UDP rechazado (traceroute)` antes del drop final (`87f26c9`, review de R5) |
+| `ISP-2_20261028_traceroute.rsc` | ISP-2 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | Ídem ISP-1 |
 
 Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo es la hora UTC del router (hora local = UTC − 3):
 
@@ -423,6 +450,10 @@ Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gest
 - CORE-1, CORE-2, DIST-1 y DIST-2, BASE: `2026-10-16 16:06`–`16:08` UTC → 16/10 13:06–13:08. Ya guardan `available-from=` en `ssh`/`winbox`, que es lo que se cita como prueba en el #11.
 
 R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mismas IPs, servicios, listas y descubrimiento, y ninguno tiene claves.
+
+- F2, F3 y F4: los encabezados también están en UTC (EDGE `_ospf` `2026-10-22 23:32` → 22/10 20:32; CORE/DIST `_f2` `2026-10-23 00:30`–`00:32` → 22/10 21:30–21:32; EDGE/ISP `_f3` `2026-10-23 19:57` → 23/10 16:57; CORE/DIST `_f3` `2026-10-23 21:08`–`21:09` → 23/10 18:08–18:09; EDGE/ISP `_f4` `2026-10-28 21:49` → 28/10 18:49; ISP `_traceroute` `2026-10-29 01:06` → 28/10 22:06). El `_f4` de EDGE se volvió a exportar después del arreglo del traceroute y no cambió, por eso no tiene un segundo archivo.
+
+R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su fase, y coincide con el script del PR correspondiente (las reglas de firewall de CORE/DIST, regla por regla con `configs/` del #16). Ninguno trae claves: RouterOS no exporta el `auth-key` de OSPF, el `password` de VRRP ni el `tcp-md5-key` de BGP, así que en un restore se vuelven a cargar por consola con los comandos del comentario de cada bloque del script. Para los drills 3 y 4 el backup "antes" es el `_f3`, porque entre F3 y los drills no hubo cambios; las estáticas con `check-gateway` del drill 4 fueron temporales y no quedan en el `_f4`.
 
 **Qué NO trae un `/export` (a tener en cuenta en el restore):**
 

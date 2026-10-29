@@ -77,19 +77,19 @@
 
 ### VRRP (2 grupos, load-sharing, auth)
 
-- [ ] [R4] configurar VRRP vrid 10 en DIST-1 (master)
-- [ ] [R4] configurar VRRP vrid 20 en DIST-2 (master)
-- [ ] [R4] activar auth simple en ambos grupos
-- [ ] [R5] verificar master/backup con `/interface vrrp print`
+- [x] [R4] configurar VRRP vrid 10 en DIST-1 (master) — priority 150, VIP 10.10.10.1 (#14)
+- [x] [R4] configurar VRRP vrid 20 en DIST-2 (master) — priority 150, VIP 10.10.20.1 (#14)
+- [x] [R4] activar auth simple en ambos grupos — `version=2`, una clave por grupo (#14; capturas `dist1/dist2-vrrp-auth`)
+- [ ] [R5] verificar master/backup con `/interface vrrp print` — evidencia de implementación en memoria §4.1 (R3/R4); falta la verificación de R5 en su lab
 
 ### OSPF área 0 (con MD5, incluido core–core)
 
-- [ ] [R1] [R3] [R4] Configurar OSPF en edge/core/dist, incluido el enlace core-core, con MD5
-- [ ] [R5] Verificar adyacencias FULL edge↔core↔dist
+- [x] [R1] [R3] [R4] Configurar OSPF en edge/core/dist, incluido el enlace core-core, con MD5 — EDGE (#13) y CORE/DIST (#14), `auth=md5 auth-id=1`
+- [ ] [R5] Verificar adyacencias FULL edge↔core↔dist — evidencia de implementación en memoria §4.1 (`core1-ospf-vecinos`); falta la verificación de R5 en su lab
 
 ### Verificación L3 (ping intra-LAN + gateway virtual)
 
-- [ ] [R5] Verificar ping intra-LAN y respuesta del gateway virtual VRRP en ambas LANs
+- [ ] [R5] Verificar ping intra-LAN y respuesta del gateway virtual VRRP en ambas LANs — evidencia de implementación en memoria §4.1 (R3/R4); falta la verificación de R5 en su lab
 
 ---
 
@@ -97,12 +97,12 @@
 
 ### eBGP multi-homing (2 sesiones, TCP-MD5)
 
-- [ ] [R1] Configurar eBGP EDGE↔ISP-1 y EDGE↔ISP-2 con TCP-MD5
-- [ ] [R1] Verificar sesiones Established
+- [x] [R1] Configurar eBGP EDGE↔ISP-1 y EDGE↔ISP-2 con TCP-MD5 — #17, una clave por sesión
+- [x] [R1] Verificar sesiones Established — #17 (`edge-bgp-sesiones`)
 
 ### Redistribución OSPF→BGP
 
-- [ ] [R1] Redistribuir OSPF→BGP para anunciar las LANs a los ISP
+- [x] [R1] Redistribuir OSPF→BGP para anunciar las LANs a los ISP — #17 (filtro `bgp-out-isp`)
 
 ### Salida a "Internet" (host → loopback ISP)
 
@@ -110,8 +110,8 @@
 
 ### Firewall edge (filtro + plano de gestión)
 
-- [ ] [R1] Configurar filtro de entrada en EDGE
-- [ ] [R1] [R3] [R4] Proteger el plano de gestión en los 7 routers
+- [x] [R1] Configurar filtro de entrada en EDGE — #17 (input, forward y antispoofing en `raw`)
+- [x] [R1] [R3] [R4] Proteger el plano de gestión en los 7 routers — CORE/DIST (#16) y EDGE/ISP (#17)
 
 ---
 
@@ -120,7 +120,7 @@
 ### Los 5 drills (runbook + post-mortem + tiempo)
 
 - [ ] [R5] Diseñar la plantilla de runbook (detección → respuesta → recuperación → post-mortem)
-- [ ] [R1] [R3] [R4] [R5] Ejecutar cada drill y medir tiempo de convergencia, rotando quién opera
+- [~] [R1] [R3] [R4] [R5] Ejecutar cada drill y medir tiempo de convergencia, rotando quién opera — drills 3 (8 s) y 4 (29 s) operados por R1/R2 (#18); faltan 1, 2 y 5
 
 ### Restore probado (política de backup 1.4)
 
@@ -132,7 +132,7 @@
 
 ### Verificación de seguridad (clave incorrecta falla)
 
-- [ ] [R1] [R3] [R4] Ejecutar y documentar la prueba de seguridad: adyacencia/sesión con clave incorrecta debe fallar
+- [~] [R1] [R3] [R4] Ejecutar y documentar la prueba de seguridad: adyacencia/sesión con clave incorrecta debe fallar — BGP hecho (#18, R1); faltan OSPF y VRRP (R3/R4)
 - [ ] Intercambio Persona A ↔ Persona B (equivale a la rotación R1↔R2 de la consigna; A ya cubre R1+R2, así que el intercambio real es A revisando OSPF/VRRP y B revisando Edge-ISP, para que ambos puedan defender la parte del otro en F5)
 
 ---
