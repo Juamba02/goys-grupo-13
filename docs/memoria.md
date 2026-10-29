@@ -435,7 +435,7 @@ Observaciones:
 
 ### 6.2 Backups
 
-> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backups post-cambio de F1 a F4; restore pendiente de F4. La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
+> Evidencia de backup (`/export`) y de **restore probado** — backups BASE de F1 hechos para los 7 routers y backups post-cambio de F1 a F4; restore probado en DIST-2 el 29/10 (ver al final de la sección). La política 1.4 pide solo el `/export`; el backup binario (`/system backup save`) no se toma.
 
 **Backups versionados** (política 1.4, `backups/<router>_<AAAAMMDD>_<motivo>.rsc`):
 
@@ -491,13 +491,31 @@ R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su f
 - **Usuarios:** `/user` no forma parte del `/export`; el usuario `monitor` no aparece en ninguno de los archivos. Después de importar hay que **crearlo**, no solo activarlo: `/user add name=monitor group=read password=<clave>`, y fijar la clave de `admin` con `/password`.
 - **Valores por defecto:** el export es compacto y solo lista lo que difiere del default (por ejemplo, `socks`, `upnp` o `proxy` apagados no aparecen porque ya vienen así).
 
-**Restore probado:** pendiente (F4). Procedimiento:
+**Procedimiento de restore:**
 
 1. Dejar el CHR limpio: `/system reset-configuration no-defaults=yes skip-backup=yes`. El router reinicia **sin ninguna IP** y con `admin` sin clave (pide una nueva en el primer login).
 2. Como no tiene IP, no se le puede subir el `.rsc` por red para usar `/import file-name=...`. En GNS3 se abre la consola del nodo y se **pega el contenido del backup** (conviene pegarlo por bloques, sección por sección, para que la consola no pierda caracteres).
    - Alternativa: darle a mano solo la IP de un enlace (por ejemplo `/ip address add address=192.0.2.2/30 interface=ether1` en EDGE), subir el archivo desde un vecino y recién ahí `/import file-name=<archivo>.rsc`.
 3. Recrear usuarios (el `/export` no los trae): `/password` para `admin` y `/user add name=monitor group=read password=<clave>`.
 4. Verificar con `/ip address print`, `/ip service print` y ping al vecino; captura en `capturas/`.
+
+**Restore probado (29/10/2026, R5, lab de R5):** DIST-2 con `DIST-2_20261029_snmp.rsc`.
+
+| Paso | Qué se hizo | Resultado |
+| :---- | :---- | :---- |
+| 1. CHR limpio | `/system reset-configuration no-defaults=yes skip-backup=yes` | Reinicia sin IPs, con identidad `CHR` y pidiendo clave nueva para `admin` — `capturas/f4/dist2-restore-limpio-r5.png`. Mientras tanto DIST-1 queda master de los dos grupos VRRP y las LANs siguen andando (drill 5) |
+| 2. Pegar el backup | El `.rsc` pegado por consola en 4 bloques, tal cual (solo se unieron las líneas partidas con ``) | Entra todo salvo **2 líneas que fallan**: `monitor-v3` (`authentication password minimum length is 8 symbols`) y la plantilla `ospf-transito` (`auth-key must be specified`). El export las trae sin claves y RouterOS no acepta crearlas así |
+| 3. Lo que el export no trae | Claves de VRRP (`/interface vrrp set ... password=`), plantilla `ospf-transito` con `auth-key`, `monitor-v3` con sus dos claves y el usuario `monitor` (`/user add`, que pide la clave) | Hasta cargar las claves de VRRP, DIST-2 queda **master de los dos grupos** a la vez que DIST-1 (`simple authentication failed` en los dos): doble master en las dos LANs. Se corrige al cargar las claves |
+| 4. Sobrante del CHR limpio | `/ip dhcp-client remove [ find ]` | El reset deja un cliente DHCP en `ether1` (uplink a CORE-1) que no está en el backup: el `/export` lista lo que hay, no lo que hay que borrar |
+| 5. Verificación | En DIST-2: `/routing ospf neighbor print`, `/interface vrrp print`, `/user print`; en SRV: `ping` y `trace 10.10.10.10` | OK — CORE-1 y CORE-2 en `Full`, `vrrp10` en `B` y `vrrp20` en `RM`, `admin` y `monitor`; SRV vuelve a salir por DIST-2 (10.10.20.3) — `capturas/f4/dist2-restore-verificacion-r5.png`, `srv-restore-r5.png` |
+| 6. Comparación | `/export` de DIST-2 restaurado contra `DIST-2_20261029_snmp.rsc` | Iguales salvo la fecha y el orden de `ospf-transito` (se creó al final, a mano) |
+
+**Lo que aprendimos del restore** (para el procedimiento de arriba):
+
+- El backup **no se importa tal cual**: OSPF con MD5 y la community SNMPv3 se rechazan sin claves. Hay que tener a mano, desde el gestor, las claves de OSPF, VRRP, BGP (en EDGE/ISP) y SNMP, y pegar esas líneas con la clave.
+- Las claves de VRRP se cargan **apenas se pega el bloque de VRRP**, no al final: un DIST con VRRP sin clave se pone master de los dos grupos y corta las LANs mientras dura el restore.
+- Después del reset hay que borrar el `dhcp-client` que deja el CHR.
+- Lo demás (IPs, listas, firewall, servicios, SNMP, identidad) entra completo desde el `/export`.
 
 ### 6.3 Monitoreo
 
@@ -521,7 +539,7 @@ Para OSPF, BGP y VRRP se usan los `print` y los eventos del log, que son los que
 - **`public` neutralizada:** viene por defecto y RouterOS no deja borrarla; se le sacó la lectura y se limitó a `127.0.0.1/32`.
 - **Engine ID único:** `engine-id-suffix` con el nombre de cada router. Los CHR del lab salen de la misma imagen y tenían todos el mismo engine ID (`80003a8c04`); con un engine ID repetido el descubrimiento de SNMPv3 falla. Se encontró al probar y quedó en el script.
 - **Firewall:** regla `input: SNMP solo desde gestion` (`udp/161`, lista `LAN`, address-list `gestion`) antes del drop final del firewall de input de F3.
-- **Claves:** la de autenticación y la de cifrado se cargan por consola; no están en el repo y el `/export` no las muestra (la community se exporta sin claves). En el lab de R5 son propias del lab (§5).
+- **Claves:** la de autenticación y la de cifrado se cargan por consola; no están en el repo y el `/export` no las muestra (la community se exporta sin claves, pero RouterOS no deja crearla sin ellas: el script la deja como comando de consola, y en un restore hay que crearla a mano, §6.2). En el lab de R5 son propias del lab (§5).
 
 **Verificación (29/10, lab de R5):**
 
@@ -593,7 +611,7 @@ La community temporal v2c y el log de SNMP se usaron solo para diagnosticar y se
 ### Operación
 
 - [ ] Change log completo (refleja los commits del repo)
-- [ ] Backups con restore probado
+- [x] Backups con restore probado
 - [x] Monitoreo habilitado y documentado
 - [ ] Runbook por drill + post-mortem global
 
