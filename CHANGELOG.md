@@ -110,8 +110,26 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 23/10/2026 | Juan Bautista Aramberri (R3) | `cfce954` | Plano de gestión de CORE-1 y CORE-2 con firewall de input | CORE-1, CORE-2 | `/ip firewall filter disable [ find ]` y revertir el commit |
 | 23/10/2026 | Juan Bautista Aramberri (R3/R4) | `12ec9e3` | Memoria §3, §4.1 y §5: plano de gestión de CORE/DIST | `docs/memoria.md` | Revertir el commit |
 | 23/10/2026 | Juan Bautista Aramberri (R3/R4) | `503e5af` | Capturas del firewall de input en CORE-1 y DIST-1 y gestión bloqueada desde PC-USER | `capturas/f3/` | Revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R2) | `9a37edc` | eBGP con TCP-MD5 y `default-originate` en ISP-1 e ISP-2 | ISP-1, ISP-2 | `/routing bgp connection disable [ find name=to-EDGE ]` y revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R1) | `3b1d9b2` | eBGP multi-homing con TCP-MD5 en EDGE, redistribución de las LANs y default por OSPF | EDGE | Deshabilitar `to-ISP-1` / `to-ISP-2`, `originate-default=never` y revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R1/R2) | sin commit (solo router) | Claves TCP-MD5 cargadas por consola en las dos sesiones | EDGE, ISP-1, ISP-2 | Deshabilitar las sesiones |
+| 23/10/2026 | Joaquin Mazza (R1/R2) | `358a0bf` | Memoria §3, §4.1 y §5 con BGP y sus capturas | `docs/memoria.md`, `capturas/f3/` | Revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R1) | `fdb4cc3` | Firewall del EDGE: filtro de entrada, plano de gestión y antispoofing | EDGE | `/ip firewall filter disable [ find ]` y `/ip firewall raw disable [ find ]`; revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R2) | `a3e0782` | Plano de gestión de ISP-1 e ISP-2 con firewall de input | ISP-1, ISP-2 | `/ip firewall filter disable [ find ]` y revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R1/R2) | `610e417` | Memoria §3, §4.1 y §5 con el firewall y sus capturas | `docs/memoria.md`, `capturas/f3/` | Revertir el commit |
+| 23/10/2026 | Joaquin Mazza (R1/R2) | `a93d09e` | Usuario `monitor` al final de los scripts de EDGE, ISP-1 e ISP-2 (igual que CORE/DIST) | EDGE, ISP-1, ISP-2 (solo script) | Revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R2) | `3c48e29` | Timers de BGP en 9s y destino de prueba 198.51.100.1 en ISP-1 e ISP-2 | ISP-1, ISP-2 | `hold-time=3m keepalive-time=1m`, borrar la IP y revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R1) | `4424874` | Hold-time de BGP en 9s en EDGE (post-mortem del drill 3) | EDGE | `hold-time=3m keepalive-time=1m` y revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R1) | sin commit (solo router) | Drill 4: estáticas con `check-gateway` agregadas y borradas al terminar | EDGE | Ya borradas |
+| 28/10/2026 | Joaquin Mazza (R1/R2) | `c38b27e` | Memoria §3 y §4.2 con los drills 3 y 4 y sus capturas | `docs/memoria.md`, `capturas/f4/` | Revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R1/R2) | `dd5d692` | Memoria §5 con la prueba de clave TCP-MD5 incorrecta y sus capturas | `docs/memoria.md`, `capturas/f4/` | Revertir el commit |
 | 28/10/2026 | Joaquin Mazza (R1/R2) | `e2f7e3e` | Merge del PR #16 con merge commit | `main` | `git revert -m 1 e2f7e3e` |
 | 28/10/2026 | Tomas Costa (R5) | `62aa60a` | Backups post-cambio de F2, F3 y F4 de los 7 routers (tomados por R1/R2 y R3/R4) | `backups/` | No aplica (solo respaldo) |
 | 28/10/2026 | Tomas Costa (R5) | `97d88dd` | Memoria §6.2: registro de los 15 backups nuevos, hora de cada encabezado y revisión de R5 | `docs/memoria.md` | Revertir el commit |
 | 28/10/2026 | Tomas Costa (R5) | `d2b4066` | Backlog: estado de F2, F3 y F4 | `backlog.md` | Revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R2) | `87f26c9` | ISP-1 e ISP-2 rechazan UDP con port-unreachable en vez de descartarlo, para que el `trace` de los hosts llegue al último salto (review R5) | ISP-1, ISP-2 | `/ip firewall filter remove [ find comment="input: UDP rechazado (traceroute)" ]` y revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R1/R2) | `9602c0b` | `198.51.100.1/32` en el IPAM de la memoria 1.2 (review R5) | `docs/memoria.md` | Revertir el commit |
+| 28/10/2026 | Joaquin Mazza (R1/R2) | `3c5bddb` | Merge de `f3-bgp-edge-isp` en la rama del PR #18 (trae `87f26c9`) | rama `f4-drills-edge-isp` | No aplica (merge de sincronización; se revierte junto con el merge del PR, `git revert -m 1 dd52628`) |
+| 28/10/2026 | Tomas Costa (R5) | `9848a0f` | Merge del PR #17 con merge commit | `main` | `git revert -m 1 9848a0f` |
+| 28/10/2026 | Tomas Costa (R5) | `dd52628` | Merge del PR #18 con merge commit | `main` | `git revert -m 1 dd52628` |
 | 28/10/2026 | Tomas Costa (R5) | `d443c55` | Backups de ISP-1 e ISP-2 con el rechazo de UDP para el traceroute (tomados por R2 después de `87f26c9`) y registro en §6.2 | `backups/`, `docs/memoria.md` | No aplica (solo respaldo); revertir el commit |
