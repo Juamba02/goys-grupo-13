@@ -558,9 +558,54 @@ La community temporal v2c y el log de SNMP se usaron solo para diagnosticar y se
 
 ## 7. Capturas
 
-> Listar o enlazar la carpeta de capturas (drills, tablas, failover) — **pendiente de F4/F5**.
+Las 110 capturas están en [`capturas/`](../capturas/), en una carpeta por fase (`f1` a `f4`), con el nombre `<router o host>-<qué muestra>.png`. Las que llevan el sufijo `-r5` son de la verificación independiente de R5 en su propio lab; las demás, de quien implementó (R1/R2 o R3/R4). Este índice las agrupa por lo que prueban y dice en qué sección se usan como evidencia.
 
-<!-- -->
+### 7.1 F1 — Topología, direccionamiento y hardening ([`capturas/f1/`](../capturas/f1/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| Topología en GNS3 (parcial del 15/10 y completa del 16/10) | `topologia-gns3`, `topologia-gns3-completa` | R5 | §2 |
+| IPs de los hosts | `pc-user-ip`, `srv-ip` | R5 | §3 |
+| IPs y ping a los vecinos directos (implementación) | `edge-ips-y-pings`, `isp1-isp2-ips-y-pings`, `edge-core-pings`, `core1-pings`, `core2-pings`, `dist1-pings`, `dist2-pings` | R1/R2, R3/R4 | §4.1 |
+| IPs y ping a los vecinos directos (verificación) | `edge-ips-ping`, `isp1-ips-ping`, `isp2-ips-ping`, `core1-ips-ping`, `core2-ips-ping`, `dist1-ips-ping`, `dist2-ips-ping` | R5 | §4.1 |
+| Hardening de CORE/DIST recién aplicado (implementación) | `core1-servicios-y-monitor`, `core2-ips-servicios-y-monitor`, `dist1-ips-servicios-y-monitor`, `dist2-ips-servicios-y-monitor`, `dist1-bandwidth-server` | R3/R4 | §5 |
+| Hardening de EDGE e ISP: servicios, `monitor` de solo lectura, descubrimiento y MAC server, puertos sin uso apagados | `edge-servicios`, `isp1-servicios`, `isp2-servicios`, `edge-monitor-solo-lectura`, `isp1-monitor-solo-lectura`, `isp2-monitor-solo-lectura`, `edge-neighbor-macserver`, `isp1-neighbor-macserver`, `isp2-neighbor-macserver`, `edge-mac-winbox`, `isp1-interfaces`, `isp2-interfaces` | R5 | §5 |
+| Hardening de CORE/DIST después de reiniciar: servicios, `monitor` de solo lectura, descubrimiento y MAC server, servicios dinámicos que desaparecen | `core1-servicios`, `core2-servicios`, `dist1-servicios`, `dist2-servicios`, `dist1-servicios-reinicio`, `dist1-servicios-estable`, `core1-monitor-solo-lectura`, `core2-monitor-solo-lectura`, `dist1-monitor-solo-lectura`, `dist2-monitor-solo-lectura`, `core1-neighbor-macserver`, `core2-neighbor-macserver`, `dist1-neighbor-macserver`, `dist2-neighbor-macserver` | R5 | §5 |
+
+### 7.2 F2 — OSPF y VRRP ([`capturas/f2/`](../capturas/f2/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| OSPF de EDGE: vecinos, rutas, MD5 y ping entre loopbacks | `edge-ospf-vecinos`, `edge-ospf-rutas`, `edge-ospf-md5`, `core1-ospf-md5`, `edge-ping-loopbacks` | R1 | §4.1, §5 |
+| OSPF de CORE/DIST con MD5 y topología completa | `core1-ospf`, `core2-ospf`, `ospf-md5`, `core1-ospf-vecinos` | R3/R4 | §4.1, §5 |
+| VRRP master/backup y auth | `dist1-ospf-vrrp`, `dist2-ospf-vrrp`, `dist1-vrrp-auth`, `dist2-vrrp-auth` | R4 | §4.1, §5 |
+| Gateway virtual e intra-LAN desde los hosts | `pc-user-ping`, `srv-ping` | R3/R4 | §4.1 |
+| Verificación de F2: los dos CORE con 4 vecinos en `Full`, VRRP con un master por grupo, ping a las VIP y entre hosts | `core1-ospf-vecinos-r5`, `core2-ospf-vecinos-r5`, `dist1-vrrp-r5`, `dist2-vrrp-r5`, `pc-user-ping-r5`, `srv-ping-r5` | R5 | §4.1 |
+
+### 7.3 F3 — BGP y firewall ([`capturas/f3/`](../capturas/f3/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| Sesiones eBGP y rutas en EDGE y en los ISP | `edge-bgp-sesiones`, `edge-bgp-rutas`, `isp1-bgp-rutas`, `isp2-bgp-rutas` | R1/R2 | §4.1, §5 |
+| Firewall del EDGE y de los ISP | `edge-firewall-input`, `edge-firewall-forward`, `isp1-firewall-pruebas` | R1/R2 | §4.1, §5 |
+| Plano de gestión de CORE/DIST: gestión bloqueada desde la LAN | `core1-firewall`, `dist1-firewall`, `pc-user-gestion-bloqueada` | R3/R4 | §4.1, §5 |
+| Verificación de F3: rutas BGP en EDGE y traceroute desde los hosts a las loopbacks de los ISP | `edge-bgp-rutas-r5`, `pc-user-trace-isp-r5`, `srv-trace-isp-r5` | R5 | §4.1 |
+
+### 7.4 F4 — Drills, pruebas de clave incorrecta, monitoreo y restore ([`capturas/f4/`](../capturas/f4/))
+
+| Qué prueba | Capturas | Quién | Sección |
+| :---- | :---- | :---- | :---- |
+| Drill 1 — VRRP: se cae el gateway | `pc-user-drill1-ping`, `dist2-drill1-vrrp` | R3/R4 | §4.2, `runbooks/drill-1-vrrp.md` |
+| Drill 2 — OSPF: se corta el camino interno | `pc-user-drill2-ping`, `dist1-drill2-ruta`, `dist1-drill2-ospf` | R3/R4 | §4.2, `runbooks/drill-2-ospf.md` |
+| Drill 3 — BGP: se cae el proveedor (timers por defecto y 9s/3s) | `edge-drill3-holdtimer`, `dist1-drill3-ping-1`, `edge-drill3-holdtimer-9s`, `dist1-drill3-ping-2` | R1/R2 | §4.2, `runbooks/drill-3-bgp.md` |
+| Drill 4 — check-gateway | `edge-drill4-check-gateway`, `dist1-drill4-ping` | R1 | §4.2, `runbooks/drill-4-check-gateway.md` |
+| Drill 5 — load-sharing VRRP | `srv-drill5-ping`, `dist1-drill5-vrrp` | R3/R4 | §4.2, `runbooks/drill-5-load-sharing.md` |
+| Clave incorrecta de BGP: la sesión no levanta y vuelve con la correcta | `edge-bgp-clave-incorrecta`, `isp1-bgp-clave-incorrecta`, `edge-bgp-clave-correcta` | R1 | §5 |
+| Clave incorrecta de OSPF y de VRRP: adyacencias caídas y doble master | `dist2-clave-incorrecta`, `core1-ospf-sin-dist2`, `dist1-vrrp-doble-master`, `dist2-vrrp-doble-master` | R3/R4 | §5 |
+| Monitoreo SNMPv3: configuración, firewall, rechazo sin autenticación y prueba del agente | `edge-snmp-config-r5`, `edge-snmp-firewall-r5`, `edge-snmp-rechazo-v3-r5`, `core1-snmp-v2c-prueba-r5` | R5 | §5, §6.3 |
+| Restore probado de DIST-2 | `dist2-restore-limpio-r5`, `dist2-restore-verificacion-r5`, `srv-restore-r5` | R5 | §6.2 |
+
+Control de R5 al armar el índice: todas las capturas que cita la memoria existen en `capturas/`, y todas las de `capturas/` aparecen en este índice. Cuatro de implementación de CORE/DIST (`core1-servicios-y-monitor`, `core2-ips-servicios-y-monitor`, `dist2-ips-servicios-y-monitor` y `dist1-bandwidth-server`) no estaban citadas en ninguna sección y quedan referenciadas acá.
 
 ---
 
