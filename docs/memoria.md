@@ -466,6 +466,11 @@ Observaciones:
 | `ISP-2_20261028_f4.rsc` | ISP-2 | Post-cambio (F4, PR #18) | Joaquin Mazza (R2) | Ídem ISP-1 |
 | `ISP-1_20261028_traceroute.rsc` | ISP-1 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | El `_f4` + la regla `input: UDP rechazado (traceroute)` antes del drop final (`87f26c9`, review de R5) |
 | `ISP-2_20261028_traceroute.rsc` | ISP-2 | Post-cambio (F3, PR #17) | Joaquin Mazza (R2) | Ídem ISP-1 |
+| `EDGE_20261029_snmp.rsc` | EDGE | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | El `_f4` + SNMPv3 (`monitor-v3`, `public` neutralizada, `engine-id-suffix=edge`) y la regla `input: SNMP solo desde gestion` |
+| `CORE-1_20261029_snmp.rsc` | CORE-1 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | El `_f3` + SNMPv3 (`engine-id-suffix=core1`) y la regla de SNMP |
+| `CORE-2_20261029_snmp.rsc` | CORE-2 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | Ídem CORE-1 (`core2`) |
+| `DIST-1_20261029_snmp.rsc` | DIST-1 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | El `_f3` + SNMPv3 (`engine-id-suffix=dist1`) y la regla de SNMP |
+| `DIST-2_20261029_snmp.rsc` | DIST-2 | Post-cambio (F4, SNMP) | Tomas Costa (R5), lab de R5 | Ídem DIST-1 (`dist2`) |
 
 Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gestión de EDGE acotada a `10.0.0.0/24,10.255.255.0/24` y de los ISP a su loopback `/32`). La fecha del encabezado de cada archivo es la hora UTC del router (hora local = UTC − 3):
 
@@ -475,7 +480,7 @@ Los BASE de EDGE, ISP-1 e ISP-2 ya incluyen los cambios de la review de R5 (gest
 
 R5 revisó los 6 archivos nuevos contra `configs/<ROUTER>.rsc` y el IPAM 1.2: mismas IPs, servicios, listas y descubrimiento, y ninguno tiene claves.
 
-- F2, F3 y F4: los encabezados también están en UTC (EDGE `_ospf` `2026-10-22 23:32` → 22/10 20:32; CORE/DIST `_f2` `2026-10-23 00:30`–`00:32` → 22/10 21:30–21:32; EDGE/ISP `_f3` `2026-10-23 19:57` → 23/10 16:57; CORE/DIST `_f3` `2026-10-23 21:08`–`21:09` → 23/10 18:08–18:09; EDGE/ISP `_f4` `2026-10-28 21:49` → 28/10 18:49; ISP `_traceroute` `2026-10-29 01:06` → 28/10 22:06). El `_f4` de EDGE se volvió a exportar después del arreglo del traceroute y no cambió, por eso no tiene un segundo archivo.
+- F2, F3 y F4: los encabezados también están en UTC (EDGE `_ospf` `2026-10-22 23:32` → 22/10 20:32; CORE/DIST `_f2` `2026-10-23 00:30`–`00:32` → 22/10 21:30–21:32; EDGE/ISP `_f3` `2026-10-23 19:57` → 23/10 16:57; CORE/DIST `_f3` `2026-10-23 21:08`–`21:09` → 23/10 18:08–18:09; EDGE/ISP `_f4` `2026-10-28 21:49` → 28/10 18:49; ISP `_traceroute` `2026-10-29 01:06` → 28/10 22:06; EDGE/CORE/DIST `_snmp` `2026-10-29 04:39` → 29/10 01:39). Los `_snmp` son del lab de R5 (sacados por la consola de GNS3 con `/export`): contra el backup anterior de cada router solo cambia lo de SNMP; las otras diferencias son de forma (el `system id` de cada VM, el corte de las líneas largas por el ancho de la consola y, en EDGE, el orden de dos plantillas de OSPF). El `_f4` de EDGE se volvió a exportar después del arreglo del traceroute y no cambió, por eso no tiene un segundo archivo.
 
 R5 comparó cada backup con el anterior del mismo router: solo cambia lo de su fase, y coincide con el script del PR correspondiente (las reglas de firewall de CORE/DIST, regla por regla con `configs/` del #16). Ninguno trae claves: RouterOS no exporta el `auth-key` de OSPF, el `password` de VRRP ni el `tcp-md5-key` de BGP, así que en un restore se vuelven a cargar por consola con los comandos del comentario de cada bloque del script. Para los 5 drills el backup "antes" es el `_f3` de cada router, porque entre F3 y los drills no hubo cambios (los drills 1, 2 y 5 tampoco dejaron cambios: las interfaces y las claves se restauraron, así que no hay `_f4` de CORE/DIST); las estáticas con `check-gateway` del drill 4 fueron temporales y no quedan en el `_f4`.
 
