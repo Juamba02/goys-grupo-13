@@ -164,3 +164,4 @@ Los PR #3, #4 y #6 se mergearon con *squash*: sus commits originales no existen 
 | 29/10/2026 | Tomas Costa (R5) | `3c28062` | Merge del PR #23 con merge commit | `main` | `git revert -m 1 3c28062` |
 | 29/10/2026 | Tomas Costa (R5) | `8556315` | Merge del PR #24 con merge commit | `main` | `git revert -m 1 8556315` |
 | 29/10/2026 | Tomas Costa (R5) | `06c755b` | Memoria §7: índice de las 110 capturas por fase, con lo que prueba cada una, quién la tomó y dónde se usa | `docs/memoria.md` | Revertir el commit |
+| 29/10/2026 | Tomas Costa (R5) | `a10fbac` | Memoria §8: lecciones de operación, QA y monitoreo de R5 | `docs/memoria.md` | Revertir el commit |
